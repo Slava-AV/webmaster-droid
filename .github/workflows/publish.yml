@@ -4,17 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: "Workspace package name (e.g. @webmaster-droid/admin-ui)"
+        description: "Workspace package name (e.g. @webmaster-droid/web)"
         required: true
         type: choice
         options:
           - "@webmaster-droid/contracts"
-          - "@webmaster-droid/core"
-          - "@webmaster-droid/storage-s3"
-          - "@webmaster-droid/agent-ai-sdk"
-          - "@webmaster-droid/api-aws"
-          - "@webmaster-droid/react"
-          - "@webmaster-droid/admin-ui"
+          - "@webmaster-droid/web"
+          - "@webmaster-droid/server"
           - "@webmaster-droid/cli"
       tag:
         description: "npm dist-tag"
@@ -46,10 +42,16 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=optional
 
-      - name: Build
-        run: npm run build
+      - name: Ensure Rollup Linux Binary
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu
+
+      - name: Build selected package
+        run: npm run build --workspace "${{ inputs.package }}"
+
+      - name: Typecheck selected package
+        run: npm run typecheck --workspace "${{ inputs.package }}"
 
       - name: Publish (dry-run)
         if: ${{ inputs.dry_run }}
