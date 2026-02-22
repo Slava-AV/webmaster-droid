@@ -1,13 +1,18 @@
 # webmaster-droid
 
-Composable toolkit for adding an **agent-assisted editable CMS layer** to existing React/Next.js websites.
+Composable toolkit for building or upgrading React/Next.js websites with an **agent-assisted editable CMS layer**.
 
-`webmaster-droid` is designed for the self-hosted path first: you install React editing components, an admin runtime UI, and a backend API package, then connect them with your own infra.
+`webmaster-droid` is self-hosted first: you install React editing components, an admin runtime UI, and backend API packages, then run on your own infrastructure.
 
 ## Status
 
 Alpha (`0.1.0-alpha.*`).
 APIs may change between alpha releases.
+
+## Who It Is For
+
+- **New website builds**: start with `Editable*` components from day one and keep all key content CMS-editable.
+- **Existing website migration**: convert static JSX content incrementally using scan/codemod + agent skill workflow.
 
 ## Packages
 
@@ -20,7 +25,7 @@ APIs may change between alpha releases.
 - `@webmaster-droid/api-aws`: Self-hostable AWS Lambda API runtime.
 - `@webmaster-droid/cli`: Project bootstrap, schema, scan/codemod, skill install, and deploy helpers.
 
-## Quick Start (Self-Hosted, React/Next.js)
+## Quick Start (New Website, Self-Hosted)
 
 Install frontend packages:
 
@@ -43,7 +48,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Use editable components in pages/components:
+Use editable components in new pages/components:
 
 ```tsx
 import { EditableText } from "@webmaster-droid/react";
@@ -59,18 +64,9 @@ export function HeroTitle() {
 }
 ```
 
-## CLI
+## Existing Website Conversion
 
-Use without global install:
-
-```bash
-npx @webmaster-droid/cli doctor
-npx @webmaster-droid/cli init --framework next --backend aws
-npx @webmaster-droid/cli schema init
-npx @webmaster-droid/cli schema build --input cms/schema.webmaster.ts
-```
-
-Conversion helpers for existing static JSX pages:
+For existing static JSX websites, use the CLI conversion path first, then refine manually.
 
 ```bash
 npx @webmaster-droid/cli scan apps/site/src --out .webmaster-droid/scan-report.json
@@ -84,7 +80,7 @@ Install bundled Codex skill for assisted conversion:
 CODEX_HOME=~/.codex npx @webmaster-droid/cli skill install
 ```
 
-## Typical Conversion Workflow
+### Typical Conversion Workflow
 
 1. Run `scan` to identify static text/attributes.
 2. Run `codemod` in preview mode and review patch report.
@@ -92,12 +88,21 @@ CODEX_HOME=~/.codex npx @webmaster-droid/cli skill install
 4. Use the `webmaster-droid-convert` skill for semantic/path cleanup.
 5. Validate with local build/typecheck and runtime editing tests.
 
-## Backend (Self-Hosted AWS)
+## Backend (Shared by Both Paths, Self-Hosted AWS)
 
 Install backend/runtime packages:
 
 ```bash
 npm i @webmaster-droid/api-aws @webmaster-droid/core @webmaster-droid/storage-s3 @webmaster-droid/agent-ai-sdk
+```
+
+Bootstrap config/schema and run environment checks:
+
+```bash
+npx @webmaster-droid/cli doctor
+npx @webmaster-droid/cli init --framework next --backend aws
+npx @webmaster-droid/cli schema init
+npx @webmaster-droid/cli schema build --input cms/schema.webmaster.ts
 ```
 
 Build and deploy Lambda bundle with CLI helper:
