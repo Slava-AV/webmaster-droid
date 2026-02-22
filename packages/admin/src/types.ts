@@ -16,6 +16,8 @@ export type WebmasterDroidConfig = {
   modeQueryValue?: string;
   modeStorageKey?: string;
   defaultModelId?: string;
+  assistantAvatarUrl?: string;
+  assistantAvatarFallback?: string;
 };
 
 export type ResolvedWebmasterDroidConfig = {
@@ -26,6 +28,8 @@ export type ResolvedWebmasterDroidConfig = {
   modeQueryValue: string;
   modeStorageKey: string;
   defaultModelId: string;
+  assistantAvatarUrl: string;
+  assistantAvatarFallback: string;
 };
 
 export type WebmasterDroidContextValue = {

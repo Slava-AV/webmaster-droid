@@ -11,6 +11,8 @@ const DEFAULT_CONFIG: ResolvedWebmasterDroidConfig = {
   modeQueryValue: "admin",
   modeStorageKey: "webmaster_droid_admin_mode",
   defaultModelId: "openai:gpt-5.2",
+  assistantAvatarUrl: "/assets/admin/webmaster-avatar.png",
+  assistantAvatarFallback: "W",
 };
 
 function normalizeOptionalString(value: unknown): string {
@@ -51,6 +53,10 @@ export function resolveWebmasterDroidConfig(
     normalizeOptionalString(input?.modeStorageKey) || DEFAULT_CONFIG.modeStorageKey;
   const defaultModelId =
     normalizeOptionalString(input?.defaultModelId) || DEFAULT_CONFIG.defaultModelId;
+  const assistantAvatarUrl =
+    normalizeOptionalString(input?.assistantAvatarUrl) || DEFAULT_CONFIG.assistantAvatarUrl;
+  const assistantAvatarFallback =
+    normalizeOptionalString(input?.assistantAvatarFallback) || DEFAULT_CONFIG.assistantAvatarFallback;
 
   return {
     apiBaseUrl,
@@ -60,6 +66,8 @@ export function resolveWebmasterDroidConfig(
     modeQueryValue,
     modeStorageKey,
     defaultModelId,
+    assistantAvatarUrl,
+    assistantAvatarFallback,
   };
 }
 

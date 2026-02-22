@@ -187,6 +187,7 @@ export function WebmasterDroidOverlay() {
   const [sending, setSending] = useState(false);
   const [deletingCheckpointId, setDeletingCheckpointId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [assistantAvatarFailed, setAssistantAvatarFailed] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const overlayRootRef = useRef<HTMLDivElement | null>(null);
   const pendingAssistantIdRef = useRef<string | null>(null);
@@ -224,6 +225,10 @@ export function WebmasterDroidOverlay() {
       block: "end",
     });
   }, [isOpen, messages]);
+
+  useEffect(() => {
+    setAssistantAvatarFailed(false);
+  }, [config.assistantAvatarUrl]);
 
   useEffect(() => {
     if (!isOpen || !isAuthenticated || !token) {
@@ -589,6 +594,11 @@ export function WebmasterDroidOverlay() {
     latestCheckpoint !== null && (latestPublished === null || latestCheckpoint > latestPublished)
       ? "Unpublished"
       : "Published";
+  const assistantAvatarFallbackLabel = (config.assistantAvatarFallback || "W")
+    .trim()
+    .charAt(0)
+    .toUpperCase() || "W";
+  const showAssistantAvatarImage = Boolean(config.assistantAvatarUrl) && !assistantAvatarFailed;
 
   return (
     <>
@@ -748,14 +758,26 @@ export function WebmasterDroidOverlay() {
                       ) : (
                         <>
                           {isAssistant ? (
-                            <span
-                              aria-hidden="true"
-                              className={`pointer-events-none absolute left-2 top-1.5 inline-flex h-[18px] w-[18px] select-none items-center justify-center rounded-full border border-[#d6ccbb] bg-[#efe8dc] text-[9px] font-semibold text-stone-700 ${
-                                isPendingAssistant ? "animate-pulse" : ""
-                              }`}
-                            >
-                              W
-                            </span>
+                            showAssistantAvatarImage ? (
+                              <img
+                                src={config.assistantAvatarUrl}
+                                alt=""
+                                aria-hidden="true"
+                                className={`pointer-events-none absolute left-2 top-1.5 h-[18px] w-[18px] select-none rounded-full border border-[#d6ccbb] bg-[#efe8dc] object-cover ${
+                                  isPendingAssistant ? "animate-pulse" : ""
+                                }`}
+                                onError={() => setAssistantAvatarFailed(true)}
+                              />
+                            ) : (
+                              <span
+                                aria-hidden="true"
+                                className={`pointer-events-none absolute left-2 top-1.5 inline-flex h-[18px] w-[18px] select-none items-center justify-center rounded-full border border-[#d6ccbb] bg-[#efe8dc] text-[9px] font-semibold text-stone-700 ${
+                                  isPendingAssistant ? "animate-pulse" : ""
+                                }`}
+                              >
+                                {assistantAvatarFallbackLabel}
+                              </span>
+                            )
                           ) : null}
                           <div className="max-w-none text-inherit [&_code]:rounded [&_code]:bg-stone-900/10 [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4">
                             {isPendingAssistant && !entry.text.trim() ? (
