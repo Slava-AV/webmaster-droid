@@ -11,6 +11,7 @@ import { runAgentTurn } from "../agent";
 
 import { getBearerToken, verifyAdminToken } from "./auth";
 import { jsonResponse, normalizePath, parseJsonBody, sseResponse } from "./http";
+import { normalizeEditablePath } from "./normalize-editable-path";
 import { getCmsService } from "./service-factory";
 
 declare const awslambda: {
@@ -57,7 +58,6 @@ const SSE_HEADERS: Record<string, string> = {
   "access-control-allow-methods": "GET,POST,OPTIONS",
 };
 
-const EDITABLE_ROOTS = ["pages.", "layout.", "seo.", "themeTokens."] as const;
 const SELECTION_KIND_SET = new Set<SelectedElementKind>([
   "text",
   "image",
@@ -204,23 +204,6 @@ function getStageFromQuery(query: APIGatewayProxyEvent["queryStringParameters"])
   }
 
   return "live";
-}
-
-function normalizeEditablePath(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed || trimmed.length > 320) {
-    return null;
-  }
-
-  if (!EDITABLE_ROOTS.some((prefix) => trimmed.startsWith(prefix))) {
-    return null;
-  }
-
-  return trimmed;
 }
 
 function normalizeText(value: unknown, maxLength: number): string | null {
