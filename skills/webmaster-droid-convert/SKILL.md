@@ -11,15 +11,15 @@ Use this workflow:
 3. Run codemod without `--apply` and inspect report diffs.
 4. Apply codemod only after confirming scope.
 5. Resolve remaining ambiguous mappings manually.
-6. Build schema manifest and run doctor checks.
+6. Run doctor checks and, if needed, build schema manifest.
 7. Verify app behavior and run tests.
 
 Commands:
 - `npx webmaster-droid scan <srcDir> --out .webmaster-droid/scan-report.json`
 - `npx webmaster-droid codemod <srcDir> --out .webmaster-droid/codemod-report.json`
 - `npx webmaster-droid codemod <srcDir> --apply --out .webmaster-droid/codemod-report.applied.json`
-- `npx webmaster-droid schema build --input cms/schema.webmaster.ts --output cms/schema.manifest.json`
 - `npx webmaster-droid doctor`
+- `npx webmaster-droid schema build --input cms/schema.webmaster.ts --output cms/schema.manifest.json` (optional)
 
 Rules:
 - Keep changes deterministic and incremental.

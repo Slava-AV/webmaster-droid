@@ -47,7 +47,7 @@ program
 
 program
   .command("init")
-  .description("Initialize webmaster-droid config in current project")
+  .description("Initialize optional webmaster-droid config in current project")
   .option("--framework <framework>", "framework", "next")
   .option("--backend <backend>", "backend", "aws")
   .option("--out <dir>", "output dir", ".")
@@ -59,7 +59,6 @@ program
     const config = `export default {
   framework: "${opts.framework}",
   backend: "${opts.backend}",
-  schema: "./cms/schema.webmaster.ts",
   apiBaseUrlEnv: "NEXT_PUBLIC_AGENT_API_BASE_URL"
 };\n`;
 
@@ -93,7 +92,7 @@ program
     }
   });
 
-const schema = program.command("schema").description("Schema helpers");
+const schema = program.command("schema").description("Optional schema helpers");
 
 schema
   .command("init")

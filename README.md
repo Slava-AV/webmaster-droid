@@ -17,12 +17,11 @@ APIs may change between alpha releases.
 ## Packages
 
 - `@webmaster-droid/contracts`: Engine-level CMS document contracts.
-- `@webmaster-droid/contracts/starter`: Optional starter schema/content for bootstrap.
 - `@webmaster-droid/web`: Unified web package (editable React primitives + admin runtime UI/overlay).
 - `@webmaster-droid/server`: Unified backend package (core service + S3 storage + AI agent + AWS API runtime).
 - `@webmaster-droid/cli`: Project bootstrap, schema, scan/codemod, skill install, and deploy helpers.
 
-## Quick Start (New Website, Self-Hosted)
+## Quick Start (Seedless, Self-Hosted)
 
 Install frontend packages:
 
@@ -35,13 +34,10 @@ Wrap your app once:
 ```tsx
 import { WebmasterDroidRuntime } from "@webmaster-droid/web";
 import "@webmaster-droid/web/styles.css";
-import { createStarterCmsDocument } from "@webmaster-droid/contracts/starter";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <WebmasterDroidRuntime fallbackDocument={createStarterCmsDocument()}>
-      {children}
-    </WebmasterDroidRuntime>
+    <WebmasterDroidRuntime>{children}</WebmasterDroidRuntime>
   );
 }
 ```
@@ -61,6 +57,8 @@ export function HeroTitle() {
   );
 }
 ```
+
+`fallback` props are optional. If both CMS value and fallback are missing, components throw an explicit runtime error.
 
 ## Existing Website Conversion
 
@@ -94,11 +92,16 @@ Install backend/runtime packages:
 npm i @webmaster-droid/server
 ```
 
-Bootstrap config/schema and run environment checks:
+Bootstrap config and run environment checks:
 
 ```bash
 npx @webmaster-droid/cli doctor
 npx @webmaster-droid/cli init --framework next --backend aws
+```
+
+Optional schema helpers:
+
+```bash
 npx @webmaster-droid/cli schema init
 npx @webmaster-droid/cli schema build --input cms/schema.webmaster.ts
 ```
