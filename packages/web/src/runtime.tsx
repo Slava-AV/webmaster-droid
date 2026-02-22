@@ -18,8 +18,10 @@ import { WebmasterDroidProvider, useWebmasterDroid } from "./context";
 import { WebmasterDroidOverlay } from "./overlay";
 import type { WebmasterDroidConfig } from "./types";
 
+type AnyCmsDocument = CmsDocument<object, object, string>;
+
 export type WebmasterDroidCmsContextValue<
-  TDocument extends CmsDocument = CmsDocument,
+  TDocument extends AnyCmsDocument = AnyCmsDocument,
 > = {
   document: TDocument;
   stage: "live" | "draft";
@@ -27,20 +29,20 @@ export type WebmasterDroidCmsContextValue<
   error: string | null;
 };
 
-type CmsRuntimeBridgeProps<TDocument extends CmsDocument> = {
+type CmsRuntimeBridgeProps<TDocument extends AnyCmsDocument> = {
   children: ReactNode;
   fallbackDocument: TDocument;
   includeOverlay: boolean;
   applyThemeTokens: boolean;
 };
 
-type RuntimeState<TDocument extends CmsDocument> = {
+type RuntimeState<TDocument extends AnyCmsDocument> = {
   requestKey: string;
   document: TDocument;
   error: string | null;
 };
 
-const CmsRuntimeContext = createContext<WebmasterDroidCmsContextValue<CmsDocument> | null>(null);
+const CmsRuntimeContext = createContext<WebmasterDroidCmsContextValue<AnyCmsDocument> | null>(null);
 
 function createThemeCssVariables(tokens: CmsDocument["themeTokens"]): CSSProperties {
   return {
@@ -54,7 +56,7 @@ function createThemeCssVariables(tokens: CmsDocument["themeTokens"]): CSSPropert
   };
 }
 
-function CmsRuntimeBridge<TDocument extends CmsDocument>(
+function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
   props: CmsRuntimeBridgeProps<TDocument>
 ) {
   const { config, isAdminMode, isAuthenticated, token, refreshKey } = useWebmasterDroid();
@@ -137,7 +139,7 @@ function CmsRuntimeBridge<TDocument extends CmsDocument>(
   );
 }
 
-export function WebmasterDroidRuntime<TDocument extends CmsDocument>(props: {
+export function WebmasterDroidRuntime<TDocument extends AnyCmsDocument>(props: {
   children: ReactNode;
   fallbackDocument: TDocument;
   config?: WebmasterDroidConfig;
@@ -158,7 +160,7 @@ export function WebmasterDroidRuntime<TDocument extends CmsDocument>(props: {
 }
 
 export function useWebmasterDroidCmsDocument<
-  TDocument extends CmsDocument = CmsDocument,
+  TDocument extends AnyCmsDocument = AnyCmsDocument,
 >(): WebmasterDroidCmsContextValue<TDocument> {
   const context = useContext(CmsRuntimeContext);
   if (!context) {
