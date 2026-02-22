@@ -18,27 +18,29 @@ import { WebmasterDroidProvider, useWebmasterDroid } from "./context";
 import { WebmasterDroidOverlay } from "./overlay";
 import type { WebmasterDroidConfig } from "./types";
 
-export type WebmasterDroidCmsContextValue = {
-  document: CmsDocument;
+export type WebmasterDroidCmsContextValue<
+  TDocument extends CmsDocument = CmsDocument,
+> = {
+  document: TDocument;
   stage: "live" | "draft";
   loading: boolean;
   error: string | null;
 };
 
-type CmsRuntimeBridgeProps = {
+type CmsRuntimeBridgeProps<TDocument extends CmsDocument> = {
   children: ReactNode;
-  fallbackDocument: CmsDocument;
+  fallbackDocument: TDocument;
   includeOverlay: boolean;
   applyThemeTokens: boolean;
 };
 
-type RuntimeState = {
+type RuntimeState<TDocument extends CmsDocument> = {
   requestKey: string;
-  document: CmsDocument;
+  document: TDocument;
   error: string | null;
 };
 
-const CmsRuntimeContext = createContext<WebmasterDroidCmsContextValue | null>(null);
+const CmsRuntimeContext = createContext<WebmasterDroidCmsContextValue<CmsDocument> | null>(null);
 
 function createThemeCssVariables(tokens: CmsDocument["themeTokens"]): CSSProperties {
   return {
@@ -52,7 +54,9 @@ function createThemeCssVariables(tokens: CmsDocument["themeTokens"]): CSSPropert
   };
 }
 
-function CmsRuntimeBridge(props: CmsRuntimeBridgeProps) {
+function CmsRuntimeBridge<TDocument extends CmsDocument>(
+  props: CmsRuntimeBridgeProps<TDocument>
+) {
   const { config, isAdminMode, isAuthenticated, token, refreshKey } = useWebmasterDroid();
 
   const stage = useMemo<"live" | "draft">(
@@ -65,7 +69,7 @@ function CmsRuntimeBridge(props: CmsRuntimeBridgeProps) {
     [refreshKey, stage, token]
   );
 
-  const [state, setState] = useState<RuntimeState>({
+  const [state, setState] = useState<RuntimeState<TDocument>>({
     requestKey: "",
     document: props.fallbackDocument,
     error: null,
@@ -82,7 +86,7 @@ function CmsRuntimeBridge(props: CmsRuntimeBridgeProps) {
 
         setState({
           requestKey,
-          document: content,
+          document: content as TDocument,
           error: null,
         });
       })
@@ -107,7 +111,7 @@ function CmsRuntimeBridge(props: CmsRuntimeBridgeProps) {
   const loading = state.requestKey !== requestKey;
   const error = loading ? null : state.error;
 
-  const value = useMemo<WebmasterDroidCmsContextValue>(
+  const value = useMemo<WebmasterDroidCmsContextValue<TDocument>>(
     () => ({
       document: state.document,
       stage,
@@ -133,16 +137,16 @@ function CmsRuntimeBridge(props: CmsRuntimeBridgeProps) {
   );
 }
 
-export function WebmasterDroidRuntime(props: {
+export function WebmasterDroidRuntime<TDocument extends CmsDocument>(props: {
   children: ReactNode;
-  fallbackDocument: CmsDocument;
+  fallbackDocument: TDocument;
   config?: WebmasterDroidConfig;
   includeOverlay?: boolean;
   applyThemeTokens?: boolean;
 }) {
   return (
     <WebmasterDroidProvider config={props.config}>
-      <CmsRuntimeBridge
+      <CmsRuntimeBridge<TDocument>
         fallbackDocument={props.fallbackDocument}
         includeOverlay={props.includeOverlay ?? true}
         applyThemeTokens={props.applyThemeTokens ?? true}
@@ -153,11 +157,13 @@ export function WebmasterDroidRuntime(props: {
   );
 }
 
-export function useWebmasterDroidCmsDocument(): WebmasterDroidCmsContextValue {
+export function useWebmasterDroidCmsDocument<
+  TDocument extends CmsDocument = CmsDocument,
+>(): WebmasterDroidCmsContextValue<TDocument> {
   const context = useContext(CmsRuntimeContext);
   if (!context) {
     throw new Error("useWebmasterDroidCmsDocument must be used within <WebmasterDroidRuntime>");
   }
 
-  return context;
+  return context as WebmasterDroidCmsContextValue<TDocument>;
 }
