@@ -37,6 +37,7 @@ Wrap your app once:
 
 ```tsx
 import { WebmasterDroidRuntime } from "@webmaster-droid/admin-ui";
+import "@webmaster-droid/admin-ui/styles.css";
 import { createDefaultCmsDocument } from "@webmaster-droid/contracts";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {

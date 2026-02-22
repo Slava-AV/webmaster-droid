@@ -1,6 +1,6 @@
 {
   "name": "@webmaster-droid/admin-ui",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,8 +8,12 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
   "files": [
     "dist"
   ],
@@ -27,8 +31,14 @@
     "remark-gfm": "^4.0.1"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format esm --dts --clean",
+    "build": "npm run build:js && npm run build:styles",
+    "build:js": "tsup src/index.tsx --format esm --dts --clean",
+    "build:styles": "tailwindcss -i src/styles.css -o dist/styles.css --minify",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
   },
   "description": "Drop-in admin runtime and chat overlay UI for webmaster-droid.",
   "license": "MIT",
