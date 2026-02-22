@@ -44,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --include=optional
 
-      - name: Ensure Rollup Linux Binary
-        run: npm install --no-save @rollup/rollup-linux-x64-gnu
+      - name: Ensure Linux Optional Binaries
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu @parcel/watcher-linux-x64-glibc
 
       - name: Build selected package
         run: npm run build --workspace "${{ inputs.package }}"
