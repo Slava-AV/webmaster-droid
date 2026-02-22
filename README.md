@@ -12,7 +12,7 @@ APIs may change between alpha releases.
 ## Who It Is For
 
 - **New website builds**: start with `Editable*` components from day one and keep all key content CMS-editable.
-- **Existing website migration**: convert static JSX content incrementally using scan/codemod + agent skill workflow.
+- **Existing website conversion**: convert static JSX content incrementally using scan/codemod + agent skill workflow.
 
 ## Packages
 
@@ -21,19 +21,6 @@ APIs may change between alpha releases.
 - `@webmaster-droid/web`: Unified web package (editable React primitives + admin runtime UI/overlay).
 - `@webmaster-droid/server`: Unified backend package (core service + S3 storage + AI agent + AWS API runtime).
 - `@webmaster-droid/cli`: Project bootstrap, schema, scan/codemod, skill install, and deploy helpers.
-
-## Migration From Legacy Packages
-
-Legacy package split has been collapsed into the current 4-package structure.
-
-- `@webmaster-droid/admin-ui` + `@webmaster-droid/react` -> `@webmaster-droid/web`
-- `@webmaster-droid/core` + `@webmaster-droid/storage-s3` + `@webmaster-droid/agent-ai-sdk` + `@webmaster-droid/api-aws` -> `@webmaster-droid/server`
-- `@webmaster-droid/contracts` remains the shared contracts package.
-
-Legacy registry status:
-
-- Unpublished: `@webmaster-droid/admin`, `@webmaster-droid/admin-ui`, `@webmaster-droid/react`, `@webmaster-droid/api-aws`
-- Deprecated (kept for npm policy compatibility): `@webmaster-droid/core`, `@webmaster-droid/storage-s3`, `@webmaster-droid/agent-ai-sdk`
 
 ## Quick Start (New Website, Self-Hosted)
 
