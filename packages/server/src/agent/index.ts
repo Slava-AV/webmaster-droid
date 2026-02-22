@@ -1,18 +1,17 @@
-import { google } from "@ai-sdk/google";
-import { openai } from "@ai-sdk/openai";
-import { type ModelMessage, generateObject, generateText, stepCountIs, tool } from "ai";
+import { type ModelMessage, generateText, stepCountIs, tool } from "ai";
 import { z } from "zod";
 
 import {
   type CmsPageId,
   type CmsDocument,
-  type ModelProviderConfig,
   type PatchOperation,
   requiresStrictImageValidation,
   type SelectedElementContext,
   type ThemeTokens,
 } from "@webmaster-droid/contracts";
 import { CmsService, createPatchFromAgentOperations } from "../core";
+import { resolveMutationPolicy } from "./intent";
+import { resolveModel } from "./model";
 import { buildSystemPrompt } from "./prompt";
 
 export interface AgentRunnerInput {
@@ -60,41 +59,6 @@ const IMAGE_URL_REGEX = /https:\/\/[^\s<>"'`]+/gi;
 const IMAGE_EXTENSION_PATTERN = /\.(png|jpe?g|webp|gif|bmp|svg|avif)$/i;
 const VISION_INPUT_LIMIT = 3;
 
-interface VisionInputImage {
-  url: string;
-  source: "selected-element" | "prompt-url" | "inferred-context";
-}
-
-function normalizeModelId(modelId: string): string {
-  if (modelId.includes(":")) {
-    return modelId;
-  }
-
-  return modelId.startsWith("gemini") ? `gemini:${modelId}` : `openai:${modelId}`;
-}
-
-function resolveModel(modelId: string, config: ModelProviderConfig) {
-  const normalized = normalizeModelId(modelId || config.defaultModelId);
-
-  if (normalized.startsWith("openai:")) {
-    if (!config.openaiEnabled) {
-      throw new Error("OpenAI provider is disabled.");
-    }
-
-    return openai(normalized.replace("openai:", ""));
-  }
-
-  if (normalized.startsWith("gemini:")) {
-    if (!config.geminiEnabled) {
-      throw new Error("Gemini provider is disabled.");
-    }
-
-    return google(normalized.replace("gemini:", ""));
-  }
-
-  throw new Error(`Unsupported model identifier: ${normalized}`);
-}
-
 function geminiImageRequestTimeoutMs(): number {
   const raw = process.env.GEMINI_IMAGE_REQUEST_TIMEOUT_MS;
   if (!raw) {
@@ -109,70 +73,9 @@ function geminiImageRequestTimeoutMs(): number {
   return parsed;
 }
 
-function normalizeIntentText(value: string): string {
-  return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function summarizeConversationForIntent(
-  history?: Array<{ role: "user" | "assistant"; text: string }>
-): string {
-  if (!history || history.length === 0) {
-    return "No prior turns.";
-  }
-
-  return history
-    .slice(-10)
-    .map((turn, index) => {
-      const label = turn.role === "assistant" ? "Assistant" : "User";
-      const compact = turn.text.replace(/\s+/g, " ").trim().slice(0, 400);
-      return `${index + 1}. ${label}: ${compact}`;
-    })
-    .join("\n");
-}
-
-async function resolveMutationPolicy(
-  model: ReturnType<typeof resolveModel>,
-  prompt: string,
-  history?: Array<{ role: "user" | "assistant"; text: string }>
-): Promise<{ allowWrites: boolean; reason: string }> {
-  const normalized = normalizeIntentText(prompt);
-  if (!normalized) {
-    return {
-      allowWrites: false,
-      reason: "Empty request.",
-    };
-  }
-
-  try {
-    const classification = await generateObject({
-      model,
-      schema: z.object({
-        decision: z.enum(["allow_writes", "read_only"]),
-        reason: z.string().min(3).max(220),
-      }),
-      prompt: [
-        "Classify whether the latest user turn explicitly requests that we apply CMS edits now.",
-        "Use intent and conversation meaning, not keyword matching.",
-        "Return allow_writes only when the user clearly asks us to execute edits now.",
-        "Return read_only for questions, exploration, greetings, declines, deferment, or ambiguous intent.",
-        "If unsure, choose read_only.",
-        "Recent conversation:",
-        summarizeConversationForIntent(history),
-        "Latest user turn:",
-        prompt,
-      ].join("\n\n"),
-    });
-
-    return {
-      allowWrites: classification.object.decision === "allow_writes",
-      reason: classification.object.reason,
-    };
-  } catch {
-    return {
-      allowWrites: false,
-      reason: "Intent classification unavailable. Confirmation is required before edits.",
-    };
-  }
+interface VisionInputImage {
+  url: string;
+  source: "selected-element" | "prompt-url" | "inferred-context";
 }
 
 function normalizeRoutePath(path: string): string | null {
