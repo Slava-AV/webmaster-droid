@@ -14,6 +14,7 @@ import {
 import { applyPatch, applyThemeTokenPatch } from "./patch";
 import type {
   AgentBatchMutationInput,
+  AnyCmsDocument,
   CmsMutationInput,
   CmsServiceConfig,
   MutationResult,
@@ -176,7 +177,7 @@ export class CmsService {
     this.publicAssetPrefix = normalizePublicAssetPrefix(config.publicAssetPrefix);
   }
 
-  async ensureInitialized(seed: CmsDocument): Promise<void> {
+  async ensureInitialized(seed: AnyCmsDocument): Promise<void> {
     await this.storage.ensureInitialized(seed);
   }
 

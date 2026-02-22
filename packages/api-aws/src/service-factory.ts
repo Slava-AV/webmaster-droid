@@ -1,5 +1,5 @@
 import {
-  createDefaultCmsDocument,
+  createStarterCmsDocument,
   type ModelProviderConfig,
 } from "@webmaster-droid/contracts";
 import { CmsService } from "@webmaster-droid/core";
@@ -43,23 +43,50 @@ function buildModelConfig(): ModelProviderConfig {
   };
 }
 
-function parseAllowedInternalPathsEnv(): string[] {
-  const raw = process.env.CMS_ALLOWED_INTERNAL_PATHS;
-  if (!raw) {
-    return [
-      "/",
-      "/about/",
-      "/portfolio/",
-      "/contact/",
-      "/privacy-policy/",
-      "/legal-notice/",
-    ];
+function normalizeAllowedPath(path: string): string | null {
+  const trimmed = path.trim();
+  if (!trimmed.startsWith("/")) {
+    return null;
   }
 
-  return raw
+  if (trimmed === "/") {
+    return "/";
+  }
+
+  const normalized = trimmed.replace(/\/+$/, "");
+  if (!normalized) {
+    return null;
+  }
+
+  return `${normalized}/`;
+}
+
+function starterAllowedInternalPaths(): string[] {
+  const seed = createStarterCmsDocument();
+  const out = new Set<string>(["/"]);
+
+  for (const entry of Object.values(seed.seo)) {
+    const normalized = normalizeAllowedPath(entry.path);
+    if (normalized) {
+      out.add(normalized);
+    }
+  }
+
+  return Array.from(out);
+}
+
+function parseAllowedInternalPathsEnv(fallbackPaths: string[]): string[] {
+  const raw = process.env.CMS_ALLOWED_INTERNAL_PATHS;
+  if (!raw) {
+    return fallbackPaths;
+  }
+
+  const normalized = raw
     .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+    .map((item) => normalizeAllowedPath(item))
+    .filter((value): value is string => Boolean(value));
+
+  return normalized.length > 0 ? normalized : fallbackPaths;
 }
 
 export async function getCmsService(): Promise<CmsService> {
@@ -73,12 +100,12 @@ export async function getCmsService(): Promise<CmsService> {
 
       const service = new CmsService(storage, {
         modelConfig: buildModelConfig(),
-        allowedInternalPaths: parseAllowedInternalPathsEnv(),
+        allowedInternalPaths: parseAllowedInternalPathsEnv(starterAllowedInternalPaths()),
         publicAssetBaseUrl: parseOptionalEnv("CMS_PUBLIC_BASE_URL"),
         publicAssetPrefix: parseOptionalEnv("CMS_GENERATED_ASSET_PREFIX"),
       });
 
-      await service.ensureInitialized(createDefaultCmsDocument());
+      await service.ensureInitialized(createStarterCmsDocument());
       return service;
     })();
   }

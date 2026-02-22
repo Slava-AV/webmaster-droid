@@ -10,8 +10,10 @@ import type {
   ThemeTokenPatch,
 } from "@webmaster-droid/contracts";
 
+export type AnyCmsDocument = CmsDocument<object, object, string>;
+
 export interface StorageAdapter {
-  ensureInitialized(seed: CmsDocument): Promise<void>;
+  ensureInitialized(seed: AnyCmsDocument): Promise<void>;
   getContent(stage: CmsStage): Promise<CmsDocument>;
   saveDraft(content: CmsDocument): Promise<void>;
   saveLive(content: CmsDocument): Promise<void>;

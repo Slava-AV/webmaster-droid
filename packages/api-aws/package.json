@@ -1,6 +1,6 @@
 {
   "name": "@webmaster-droid/api-aws",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "type": "module",
   "exports": {
     ".": {
@@ -9,10 +9,10 @@
     }
   },
   "dependencies": {
-    "@webmaster-droid/agent-ai-sdk": "*",
-    "@webmaster-droid/contracts": "*",
-    "@webmaster-droid/core": "*",
-    "@webmaster-droid/storage-s3": "*",
+    "@webmaster-droid/agent-ai-sdk": "^0.1.0-alpha.1",
+    "@webmaster-droid/contracts": "^0.1.0-alpha.1",
+    "@webmaster-droid/core": "^0.1.0-alpha.1",
+    "@webmaster-droid/storage-s3": "^0.1.0-alpha.1",
     "aws-lambda": "^1.0.7",
     "jose": "^6.1.0"
   },
