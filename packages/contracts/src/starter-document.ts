@@ -109,11 +109,11 @@ export function createStarterCmsDocument(): StarterCmsDocument {
         contact: {
           company: "Example Commerce Private Limited (Placeholder)",
           email: "contact@example.com",
-          phone: "+91 00000 00000",
+          phone: "+00 00000 00000",
           addressLines: [
             "Floor 00, Business Park (Placeholder)",
-            "Bengaluru, Karnataka 560000",
-            "India",
+            "City, Region 00000",
+            "Country",
           ],
         },
         copyrightTemplate: "Copyright {year} Example Commerce. All rights reserved.",
@@ -124,7 +124,7 @@ export function createStarterCmsDocument(): StarterCmsDocument {
           alt: "Example Commerce",
         },
         contactCardHelperText:
-          "This is a placeholder contact profile for the India branch. Final legal and office details will be updated before production launch.",
+          "This is a placeholder contact profile. Final legal and office details should be updated before production launch.",
       },
     },
     pages: {
@@ -226,7 +226,7 @@ export function createStarterCmsDocument(): StarterCmsDocument {
           {
             id: "future",
             title: "Future",
-            body: "Example Commerce is designed as a scalable branch platform to serve regional growth. The roadmap focuses on stronger category depth, resilient sourcing, and closer retail collaboration in the Indian market.",
+            body: "Example Commerce is designed as a scalable platform to support regional growth. The roadmap focuses on stronger category depth, resilient sourcing, and closer retail collaboration.",
             image: "/assets/starter/hero-home.webp",
           },
         ],
@@ -281,11 +281,11 @@ export function createStarterCmsDocument(): StarterCmsDocument {
         details: {
           company: "Example Commerce Private Limited (Placeholder)",
           email: "contact@example.com",
-          phone: "+91 00000 00000",
+          phone: "+00 00000 00000",
           addressLines: [
             "Floor 00, Business Park (Placeholder)",
-            "Bengaluru, Karnataka 560000",
-            "India",
+            "City, Region 00000",
+            "Country",
           ],
         },
       },
@@ -293,14 +293,14 @@ export function createStarterCmsDocument(): StarterCmsDocument {
         intro: {
           title: "Privacy Policy",
           description:
-            "This v1 page contains placeholder policy language for the India branch and will be updated after legal review.",
+            "This v1 page contains placeholder policy language and should be updated after legal review.",
           eyebrow: "Privacy Policy",
         },
         sections: [
           {
             title: "Overview",
             body: [
-              "This page is a launch placeholder for the India branch and will be replaced with the final policy approved by legal counsel.",
+              "This page is a launch placeholder and will be replaced with the final policy approved by legal counsel.",
               "Example Commerce intends to process personal data only for legitimate business purposes, including communication, operations, and legal compliance.",
             ],
           },
@@ -324,7 +324,7 @@ export function createStarterCmsDocument(): StarterCmsDocument {
         intro: {
           title: "Legal Notice",
           description:
-            "This page contains placeholder legal entity information for the India branch launch phase.",
+            "This page contains placeholder legal entity information for launch.",
           eyebrow: "Legal Notice",
         },
         sections: [
@@ -337,7 +337,7 @@ export function createStarterCmsDocument(): StarterCmsDocument {
           },
           {
             title: "Contact",
-            body: ["Email: contact@example.com", "Phone: +91 00000 00000"],
+            body: ["Email: contact@example.com", "Phone: +00 00000 00000"],
           },
           {
             title: "Disclaimer",
@@ -353,7 +353,7 @@ export function createStarterCmsDocument(): StarterCmsDocument {
       home: {
         title: "Example Commerce | Nonfood Retail Partner",
         description:
-          "Example Commerce delivers quality-led nonfood sourcing, development, and retail support for the Indian market.",
+          "Example Commerce delivers quality-led nonfood sourcing, development, and retail support for modern retail markets.",
         path: "/",
       },
       about: {
