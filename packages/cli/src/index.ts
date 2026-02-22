@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 
 import { Command } from "commander";
 import { glob } from "glob";
+import { parse } from "@babel/parser";
+import traverse from "@babel/traverse";
+import * as t from "@babel/types";
 import { createTwoFilesPatch } from "diff";
 import { createJiti } from "jiti";
 import { normalizeText, transformEditableTextCodemod } from "./codemod";
