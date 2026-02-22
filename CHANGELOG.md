@@ -23,3 +23,4 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Editable*` fallback props are optional and now fail loudly at runtime when both CMS value and fallback are missing.
 - Updated CLI/docs to a seedless install flow with optional schema helpers.
 - Enforced unified package topology with CI verification (`contracts`, `web`, `server`, `cli`) and removed legacy package references from public docs/workflows.
+- Hardened `EditableRichText` against stored XSS by sanitizing CMS HTML before rendering.

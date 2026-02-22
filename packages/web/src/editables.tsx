@@ -6,6 +6,7 @@ import React, {
   type ImgHTMLAttributes,
   type ReactNode,
 } from "react";
+import sanitizeHtml from "sanitize-html";
 
 import type { CmsDocument, SelectedElementContext, SelectedElementKind } from "@webmaster-droid/contracts";
 
@@ -14,6 +15,30 @@ const MAX_PATH_LENGTH = 320;
 const MAX_LABEL_LENGTH = 120;
 const MAX_PREVIEW_LENGTH = 140;
 type AnyCmsDocument = CmsDocument<object, object, string>;
+const RICH_TEXT_ALLOWED_TAGS = [
+  "a",
+  "b",
+  "blockquote",
+  "br",
+  "code",
+  "em",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "hr",
+  "i",
+  "li",
+  "ol",
+  "p",
+  "pre",
+  "strong",
+  "u",
+  "ul",
+] as const;
+const RICH_TEXT_ALLOWED_ATTRS = ["href", "title", "aria-label", "rel"] as const;
 
 type EditableMode = "live" | "draft";
 
@@ -274,6 +299,18 @@ function pickStringValue(
   );
 }
 
+function sanitizeRichTextHtml(html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: [...RICH_TEXT_ALLOWED_TAGS],
+    allowedAttributes: {
+      a: [...RICH_TEXT_ALLOWED_ATTRS],
+    },
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowProtocolRelative: false,
+    disallowedTagsMode: "discard",
+  }) as string;
+}
+
 type TagName = keyof React.JSX.IntrinsicElements;
 
 export interface EditableTextProps extends HTMLAttributes<HTMLElement> {
@@ -324,6 +361,7 @@ export function EditableRichText({
 }: EditableRichTextProps) {
   const { document, enabled } = useEditableDocument();
   const value = pickStringValue(document, path, fallback, "EditableRichText", "fallback");
+  const sanitizedHtml = sanitizeRichTextHtml(value);
 
   const attrs = enabled
     ? editableMeta({
@@ -337,7 +375,7 @@ export function EditableRichText({
   return createElement(as, {
     ...rest,
     ...attrs,
-    dangerouslySetInnerHTML: { __html: value },
+    dangerouslySetInnerHTML: { __html: sanitizedHtml },
   });
 }
 

@@ -27,7 +27,8 @@
     "@supabase/supabase-js": "^2.57.2",
     "@webmaster-droid/contracts": "^0.1.0-alpha.2",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "sanitize-html": "^2.17.1"
   },
   "scripts": {
     "build": "npm run build:js && npm run build:styles",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
+    "@types/sanitize-html": "^2.16.0",
     "tailwindcss": "^4.1.0"
   },
   "description": "Unified web runtime and editable React components for webmaster-droid.",
