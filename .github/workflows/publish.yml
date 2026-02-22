@@ -45,7 +45,7 @@ jobs:
         run: npm ci --include=optional
 
       - name: Ensure Linux Optional Binaries
-        run: npm install --no-save @rollup/rollup-linux-x64-gnu @parcel/watcher-linux-x64-glibc lightningcss-linux-x64-gnu
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu @parcel/watcher-linux-x64-glibc lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
 
       - name: Build selected package
         run: npm run build --workspace "${{ inputs.package }}"
