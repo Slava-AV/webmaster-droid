@@ -10,6 +10,10 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial alpha monorepo setup for `webmaster-droid`.
 - Public packages under `@webmaster-droid/*`.
-- `@webmaster-droid/admin-ui` runtime with editable CMS context and overlay.
+- `@webmaster-droid/web` unified runtime package for editable CMS context and overlay.
 - CLI commands for init, schema, scan, codemod, deploy, and skill install.
 - Bundled `webmaster-droid-convert` skill.
+
+### Changed
+
+- Consolidated package layout into four packages: `contracts`, `web`, `server`, and `cli`.

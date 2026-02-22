@@ -18,12 +18,8 @@ APIs may change between alpha releases.
 
 - `@webmaster-droid/contracts`: Engine-level CMS document contracts.
 - `@webmaster-droid/contracts/starter`: Optional starter schema/content for bootstrap.
-- `@webmaster-droid/react`: UI primitives like `EditableText`, `EditableImage`, and related helpers.
-- `@webmaster-droid/admin-ui`: Drop-in admin runtime, auth-aware context, and chat/overlay UI.
-- `@webmaster-droid/core`: Core patching and CMS service abstractions.
-- `@webmaster-droid/storage-s3`: S3-backed document/media storage adapters.
-- `@webmaster-droid/agent-ai-sdk`: AI skill/tool runtime wiring (OpenAI/Gemini SDK integration).
-- `@webmaster-droid/api-aws`: Self-hostable AWS Lambda API runtime.
+- `@webmaster-droid/web`: Unified web package (editable React primitives + admin runtime UI/overlay).
+- `@webmaster-droid/server`: Unified backend package (core service + S3 storage + AI agent + AWS API runtime).
 - `@webmaster-droid/cli`: Project bootstrap, schema, scan/codemod, skill install, and deploy helpers.
 
 ## Quick Start (New Website, Self-Hosted)
@@ -31,14 +27,14 @@ APIs may change between alpha releases.
 Install frontend packages:
 
 ```bash
-npm i @webmaster-droid/contracts @webmaster-droid/react @webmaster-droid/admin-ui
+npm i @webmaster-droid/contracts @webmaster-droid/web
 ```
 
 Wrap your app once:
 
 ```tsx
-import { WebmasterDroidRuntime } from "@webmaster-droid/admin-ui";
-import "@webmaster-droid/admin-ui/styles.css";
+import { WebmasterDroidRuntime } from "@webmaster-droid/web";
+import "@webmaster-droid/web/styles.css";
 import { createStarterCmsDocument } from "@webmaster-droid/contracts/starter";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -53,7 +49,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 Use editable components in new pages/components:
 
 ```tsx
-import { EditableText } from "@webmaster-droid/react";
+import { EditableText } from "@webmaster-droid/web";
 
 export function HeroTitle() {
   return (
@@ -95,7 +91,7 @@ CODEX_HOME=~/.codex npx @webmaster-droid/cli skill install
 Install backend/runtime packages:
 
 ```bash
-npm i @webmaster-droid/api-aws @webmaster-droid/core @webmaster-droid/storage-s3 @webmaster-droid/agent-ai-sdk
+npm i @webmaster-droid/server
 ```
 
 Bootstrap config/schema and run environment checks:

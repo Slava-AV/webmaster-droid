@@ -1,6 +1,6 @@
 ---
 name: webmaster-droid-convert
-description: Convert existing React or Next.js static pages into webmaster-droid editable CMS bindings. Use when migrating hardcoded JSX text/images/links into `@webmaster-droid/react` components, generating schema manifests, running scan/codemod workflows, and validating migration quality.
+description: Convert existing React or Next.js static pages into webmaster-droid editable CMS bindings. Use when migrating hardcoded JSX text/images/links into `@webmaster-droid/web` components, generating schema manifests, running scan/codemod workflows, and validating migration quality.
 ---
 
 # Webmaster Droid Convert
