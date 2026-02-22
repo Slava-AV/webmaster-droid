@@ -31,7 +31,8 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test \"src/**/*.test.ts\""
   },
   "description": "CLI for project bootstrap, schema, scan/codemod, deploy, and skill install.",
   "license": "MIT",

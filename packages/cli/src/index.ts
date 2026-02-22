@@ -7,29 +7,11 @@ import { fileURLToPath } from "node:url";
 
 import { Command } from "commander";
 import { glob } from "glob";
-import { parse } from "@babel/parser";
-import traverse from "@babel/traverse";
-import generate from "@babel/generator";
-import * as t from "@babel/types";
 import { createTwoFilesPatch } from "diff";
 import { createJiti } from "jiti";
+import { normalizeText, transformEditableTextCodemod } from "./codemod";
 
 const program = new Command();
-
-function normalizeText(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-function defaultPathFor(file: string, line: number, kind: "text" | "link" | "image") {
-  const stem = file
-    .replace(/\\/g, "/")
-    .replace(/^\//, "")
-    .replace(/\.[tj]sx?$/, "")
-    .replace(/[^a-zA-Z0-9/]+/g, "-")
-    .replace(/\//g, ".");
-
-  return `pages.todo.${stem}.${kind}.${line}`;
-}
 
 async function ensureDir(filePath: string) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -251,87 +233,11 @@ program
 
     for (const file of files) {
       const source = await fs.readFile(file, "utf8");
-      const ast = parse(source, {
-        sourceType: "module",
-        plugins: ["typescript", "jsx"],
-      });
-
-      let touched = false;
-      let needsEditableTextImport = false;
-
-      traverse(ast, {
-        JSXElement(pathNode) {
-          const children = pathNode.node.children;
-          const nonWhitespace = children.filter(
-            (child) => !(t.isJSXText(child) && normalizeText(child.value) === "")
-          );
-
-          if (nonWhitespace.length !== 1 || !t.isJSXText(nonWhitespace[0])) {
-            return;
-          }
-
-          const text = normalizeText(nonWhitespace[0].value);
-          if (!text || text.length < 3) {
-            return;
-          }
-
-          const loc = nonWhitespace[0].loc?.start.line ?? 0;
-          const rel = path.relative(process.cwd(), file);
-          const pathHint = defaultPathFor(rel, loc, "text");
-
-          const editableEl = t.jsxElement(
-            t.jsxOpeningElement(t.jsxIdentifier("EditableText"), [
-              t.jsxAttribute(t.jsxIdentifier("path"), t.stringLiteral(pathHint)),
-              t.jsxAttribute(t.jsxIdentifier("fallback"), t.stringLiteral(text)),
-            ], true),
-            null,
-            [],
-            true
-          );
-
-          pathNode.node.children = [t.jsxExpressionContainer(editableEl)];
-          touched = true;
-          needsEditableTextImport = true;
-        },
-      });
-
-      if (!touched) {
+      const transformed = transformEditableTextCodemod(source, file, process.cwd());
+      if (!transformed.changed) {
         continue;
       }
-
-      if (needsEditableTextImport) {
-        const body = ast.program.body;
-        const hasImport = body.some(
-          (node) =>
-            t.isImportDeclaration(node) &&
-            node.source.value === "@webmaster-droid/web" &&
-            node.specifiers.some(
-              (specifier) =>
-                t.isImportSpecifier(specifier) &&
-                t.isIdentifier(specifier.imported) &&
-                specifier.imported.name === "EditableText"
-            )
-        );
-
-        if (!hasImport) {
-          body.unshift(
-            t.importDeclaration(
-              [
-                t.importSpecifier(
-                  t.identifier("EditableText"),
-                  t.identifier("EditableText")
-                ),
-              ],
-              t.stringLiteral("@webmaster-droid/web")
-            )
-          );
-        }
-      }
-
-      const next = generate(ast, { retainLines: true }, source).code;
-      if (next === source) {
-        continue;
-      }
+      const next = transformed.next;
 
       const relFile = path.relative(process.cwd(), file);
       changed.push({
