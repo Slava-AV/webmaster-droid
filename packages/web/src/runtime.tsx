@@ -10,7 +10,10 @@ import {
   type ReactNode,
 } from "react";
 
-import type { CmsDocument } from "@webmaster-droid/contracts";
+import {
+  createDefaultCmsDocument,
+  type CmsDocument,
+} from "@webmaster-droid/contracts";
 import { EditableProvider } from "./editables";
 
 import { fetchCmsContent } from "./api";
@@ -31,7 +34,7 @@ export type WebmasterDroidCmsContextValue<
 
 type CmsRuntimeBridgeProps<TDocument extends AnyCmsDocument> = {
   children: ReactNode;
-  fallbackDocument: TDocument;
+  fallbackDocument?: TDocument;
   includeOverlay: boolean;
   applyThemeTokens: boolean;
 };
@@ -60,6 +63,10 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
   props: CmsRuntimeBridgeProps<TDocument>
 ) {
   const { config, isAdminMode, isAuthenticated, token, refreshKey } = useWebmasterDroid();
+  const defaultDocument = useMemo<TDocument>(
+    () => (props.fallbackDocument ?? (createDefaultCmsDocument() as TDocument)),
+    [props.fallbackDocument]
+  );
 
   const stage = useMemo<"live" | "draft">(
     () => (isAdminMode && isAuthenticated ? "draft" : "live"),
@@ -73,7 +80,7 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
 
   const [state, setState] = useState<RuntimeState<TDocument>>({
     requestKey: "",
-    document: props.fallbackDocument,
+    document: defaultDocument,
     error: null,
   });
 
@@ -100,7 +107,7 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
         const message = error instanceof Error ? error.message : "Failed to load content.";
         setState({
           requestKey,
-          document: props.fallbackDocument,
+          document: defaultDocument,
           error: message,
         });
       });
@@ -108,7 +115,7 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
     return () => {
       ignore = true;
     };
-  }, [config.apiBaseUrl, props.fallbackDocument, requestKey, stage, token]);
+  }, [config.apiBaseUrl, defaultDocument, requestKey, stage, token]);
 
   const loading = state.requestKey !== requestKey;
   const error = loading ? null : state.error;
@@ -139,9 +146,9 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
   );
 }
 
-export function WebmasterDroidRuntime<TDocument extends AnyCmsDocument>(props: {
+export function WebmasterDroidRuntime<TDocument extends AnyCmsDocument = AnyCmsDocument>(props: {
   children: ReactNode;
-  fallbackDocument: TDocument;
+  fallbackDocument?: TDocument;
   config?: WebmasterDroidConfig;
   includeOverlay?: boolean;
   applyThemeTokens?: boolean;

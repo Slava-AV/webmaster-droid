@@ -253,16 +253,32 @@ export function parseSelectedEditableFromTarget(
   return selected;
 }
 
-function pickStringValue(document: AnyCmsDocument, path: string, fallback: string): string {
+function pickStringValue(
+  document: AnyCmsDocument,
+  path: string,
+  fallback: string | undefined,
+  componentName: string,
+  fallbackPropName: string
+): string {
   const value = readByPath(document, path);
-  return typeof value === "string" && value.trim() ? value : fallback;
+  if (typeof value === "string" && value.trim()) {
+    return value;
+  }
+
+  if (typeof fallback === "string") {
+    return fallback;
+  }
+
+  throw new Error(
+    `${componentName} missing content for "${path}". Provide a CMS value or set \`${fallbackPropName}\`.`
+  );
 }
 
 type TagName = keyof React.JSX.IntrinsicElements;
 
 export interface EditableTextProps extends HTMLAttributes<HTMLElement> {
   path: string;
-  fallback: string;
+  fallback?: string;
   as?: TagName;
   label?: string;
   relatedPaths?: string[];
@@ -277,7 +293,7 @@ export function EditableText({
   ...rest
 }: EditableTextProps) {
   const { document, enabled } = useEditableDocument();
-  const value = pickStringValue(document, path, fallback);
+  const value = pickStringValue(document, path, fallback, "EditableText", "fallback");
 
   const attrs = enabled
     ? editableMeta({
@@ -294,7 +310,7 @@ export function EditableText({
 
 export interface EditableRichTextProps extends HTMLAttributes<HTMLElement> {
   path: string;
-  fallback: string;
+  fallback?: string;
   as?: TagName;
   label?: string;
 }
@@ -307,7 +323,7 @@ export function EditableRichText({
   ...rest
 }: EditableRichTextProps) {
   const { document, enabled } = useEditableDocument();
-  const value = pickStringValue(document, path, fallback);
+  const value = pickStringValue(document, path, fallback, "EditableRichText", "fallback");
 
   const attrs = enabled
     ? editableMeta({
@@ -327,7 +343,7 @@ export function EditableRichText({
 
 export interface EditableImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   path: string;
-  fallbackSrc: string;
+  fallbackSrc?: string;
   altPath?: string;
   fallbackAlt?: string;
   label?: string;
@@ -342,8 +358,10 @@ export function EditableImage({
   ...rest
 }: EditableImageProps) {
   const { document, enabled } = useEditableDocument();
-  const src = pickStringValue(document, path, fallbackSrc);
-  const alt = altPath ? pickStringValue(document, altPath, fallbackAlt) : fallbackAlt;
+  const src = pickStringValue(document, path, fallbackSrc, "EditableImage", "fallbackSrc");
+  const alt = altPath
+    ? pickStringValue(document, altPath, fallbackAlt, "EditableImage", "fallbackAlt")
+    : (fallbackAlt ?? "");
 
   const attrs = enabled
     ? editableMeta({
@@ -361,8 +379,8 @@ export function EditableImage({
 export interface EditableLinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, "children"> {
   hrefPath: string;
   labelPath: string;
-  fallbackHref: string;
-  fallbackLabel: string;
+  fallbackHref?: string;
+  fallbackLabel?: string;
   label?: string;
 }
 
@@ -375,8 +393,14 @@ export function EditableLink({
   ...rest
 }: EditableLinkProps) {
   const { document, enabled } = useEditableDocument();
-  const href = pickStringValue(document, hrefPath, fallbackHref);
-  const text = pickStringValue(document, labelPath, fallbackLabel);
+  const href = pickStringValue(document, hrefPath, fallbackHref, "EditableLink", "fallbackHref");
+  const text = pickStringValue(
+    document,
+    labelPath,
+    fallbackLabel,
+    "EditableLink",
+    "fallbackLabel"
+  );
 
   const attrs = enabled
     ? editableMeta({
