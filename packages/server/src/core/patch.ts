@@ -89,7 +89,7 @@ function normalizeInternalPath(path: string): string | null {
   return `${normalized}/`;
 }
 
-function readByPath(input: unknown, path: string): unknown {
+export function readByPath(input: unknown, path: string): unknown {
   const segments = splitPath(path);
   let current: unknown = input;
 
