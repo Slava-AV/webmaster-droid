@@ -1,6 +1,10 @@
 export type CmsStage = "live" | "draft";
 
-export type CmsPageId =
+// Engine-level page identifier: any string key is valid.
+export type CmsPageId = string;
+
+// Opinionated starter page identifiers for the bundled starter schema/content.
+export type StarterCmsPageId =
   | "home"
   | "about"
   | "portfolio"
@@ -159,7 +163,20 @@ export interface SiteLayoutContent {
   shared: SharedLayoutContent;
 }
 
-export interface CmsDocument {
+export interface StarterCmsPages {
+  home: HomePageContent;
+  about: AboutPageContent;
+  portfolio: PortfolioPageContent;
+  contact: ContactPageContent;
+  privacyPolicy: LegalPageContent;
+  legalNotice: LegalPageContent;
+}
+
+export interface CmsDocument<
+  TPages extends object = Record<string, unknown>,
+  TLayout extends object = Record<string, unknown>,
+  TSeoPageId extends string = string,
+> {
   meta: {
     schemaVersion: number;
     contentVersion: string;
@@ -168,17 +185,16 @@ export interface CmsDocument {
     sourceCheckpointId?: string;
   };
   themeTokens: ThemeTokens;
-  layout: SiteLayoutContent;
-  pages: {
-    home: HomePageContent;
-    about: AboutPageContent;
-    portfolio: PortfolioPageContent;
-    contact: ContactPageContent;
-    privacyPolicy: LegalPageContent;
-    legalNotice: LegalPageContent;
-  };
-  seo: Record<CmsPageId, SeoEntry>;
+  layout: TLayout;
+  pages: TPages;
+  seo: Record<TSeoPageId, SeoEntry>;
 }
+
+export type StarterCmsDocument = CmsDocument<
+  StarterCmsPages,
+  SiteLayoutContent,
+  StarterCmsPageId
+>;
 
 export type PatchOperation = {
   op: "set";
@@ -253,7 +269,7 @@ export interface SelectedElementContext {
 export type EditablePath =
   | `pages.${string}`
   | `layout.${string}`
-  | `seo.${CmsPageId}.${"title" | "description"}`
+  | `seo.${string}.${"title" | "description"}`
   | `themeTokens.${keyof ThemeTokens}`;
 
 export const REQUIRED_PUBLISH_CONFIRMATION = "PUBLISH";
@@ -267,12 +283,16 @@ export function isHttpsUrl(value: unknown): value is string {
 }
 
 export function isImageLikePath(path: string): boolean {
+  const normalized = path.trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+
   return (
-    path.endsWith(".image") ||
-    path.endsWith(".imageUrl") ||
-    path.endsWith(".hero.image") ||
-    path.endsWith(".aboutTeaser.image") ||
-    path.endsWith(".sustainabilityCallout.image")
+    normalized.endsWith(".image") ||
+    normalized.endsWith(".imageurl") ||
+    normalized.endsWith(".icon") ||
+    normalized.endsWith(".logo")
   );
 }
 
@@ -290,3 +310,7 @@ export function requiresStrictImageValidation(path: string): boolean {
 }
 
 export { createDefaultCmsDocument, normalizeCmsDocument } from "./default-document";
+export {
+  createStarterCmsDocument,
+  normalizeStarterCmsDocument,
+} from "./starter-document";
