@@ -24,6 +24,9 @@ jobs:
       - name: Ensure Rollup Linux Binary
         run: npm install --no-save @rollup/rollup-linux-x64-gnu
 
+      - name: Verify Unified Topology
+        run: npm run verify:topology
+
       - name: Build
         run: npm run build
 

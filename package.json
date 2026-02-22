@@ -7,6 +7,7 @@
     "skills/*"
   ],
   "scripts": {
+    "verify:topology": "node ./scripts/verify-topology.mjs",
     "build": "npm run build --workspace @webmaster-droid/contracts && npm run build --workspace @webmaster-droid/web && npm run build --workspace @webmaster-droid/server && npm run build --workspace @webmaster-droid/cli",
     "typecheck": "npm run typecheck --workspace @webmaster-droid/contracts && npm run typecheck --workspace @webmaster-droid/web && npm run typecheck --workspace @webmaster-droid/server && npm run typecheck --workspace @webmaster-droid/cli",
     "lint": "npm run lint --workspaces --if-present",

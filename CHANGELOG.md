@@ -22,14 +22,4 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `@webmaster-droid/web` runtime is seedless by default; `fallbackDocument` is now optional.
 - `Editable*` fallback props are optional and now fail loudly at runtime when both CMS value and fallback are missing.
 - Updated CLI/docs to a seedless install flow with optional schema helpers.
-
-### Removed
-
-- Unpublished legacy packages from npm: `@webmaster-droid/admin`, `@webmaster-droid/admin-ui`, `@webmaster-droid/react`, and `@webmaster-droid/api-aws`.
-
-### Deprecated
-
-- Deprecated legacy packages on npm with migration guidance:
-  - `@webmaster-droid/core`
-  - `@webmaster-droid/storage-s3`
-  - `@webmaster-droid/agent-ai-sdk`
+- Enforced unified package topology with CI verification (`contracts`, `web`, `server`, `cli`) and removed legacy package references from public docs/workflows.
