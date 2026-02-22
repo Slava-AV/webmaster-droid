@@ -49,7 +49,6 @@ export function listStaticToolNames(): StaticToolName[] {
   return [...STATIC_TOOL_NAMES];
 }
 
-const DEFAULT_PUBLIC_BASE_URL = "https://kompernass.in";
 const DEFAULT_GEMINI_IMAGE_MODEL_ID = "gemini-3-pro-image-preview";
 const DEFAULT_GEMINI_IMAGE_REQUEST_TIMEOUT_MS = 285_000;
 const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -256,34 +255,44 @@ async function resolveMutationPolicy(
   }
 }
 
-function inferPageIdFromPath(path?: string): CmsPageId | null {
+function normalizeRoutePath(path: string): string | null {
+  const trimmed = path.trim();
+  if (!trimmed.startsWith("/")) {
+    return null;
+  }
+
+  const [withoutQuery] = trimmed.split(/[?#]/, 1);
+  if (!withoutQuery) {
+    return null;
+  }
+
+  if (withoutQuery === "/") {
+    return "/";
+  }
+
+  const normalized = withoutQuery.replace(/\/+$/, "");
+  return normalized ? `${normalized}/` : null;
+}
+
+function inferPageIdFromPath(path: string | undefined, draft: CmsDocument): CmsPageId | null {
   if (!path) {
     return null;
   }
 
-  const normalized = path.trim().toLowerCase().replace(/\/+$/, "") || "/";
-  if (normalized === "/") {
+  const normalizedPath = normalizeRoutePath(path);
+  if (!normalizedPath) {
+    return null;
+  }
+
+  for (const [pageId, entry] of Object.entries(draft.seo)) {
+    const routePath = normalizeRoutePath(entry.path);
+    if (routePath && routePath === normalizedPath) {
+      return pageId;
+    }
+  }
+
+  if (normalizedPath === "/" && "home" in draft.pages) {
     return "home";
-  }
-
-  if (normalized === "/about") {
-    return "about";
-  }
-
-  if (normalized === "/portfolio") {
-    return "portfolio";
-  }
-
-  if (normalized === "/contact") {
-    return "contact";
-  }
-
-  if (normalized === "/privacy-policy") {
-    return "privacyPolicy";
-  }
-
-  if (normalized === "/legal-notice") {
-    return "legalNotice";
   }
 
   return null;
@@ -342,7 +351,7 @@ function trimTrailingUrlPunctuation(value: string): string {
   return value.replace(/[),.;!?]+$/g, "");
 }
 
-function normalizeVisionImageUrl(value: string, publicBaseUrl: string): string | null {
+function normalizeVisionImageUrl(value: string, publicBaseUrl: string | null): string | null {
   const cleaned = trimTrailingUrlPunctuation(value.trim());
   if (!cleaned) {
     return null;
@@ -373,7 +382,7 @@ function collectVisionInputImages(input: {
   draft: CmsDocument;
   prompt: string;
   selectedElement?: SelectedElementContext;
-  publicBaseUrl: string;
+  publicBaseUrl: string | null;
   currentPageId?: CmsPageId | null;
 }): VisionInputImage[] {
   const items: VisionInputImage[] = [];
@@ -528,15 +537,6 @@ function previewDocument(document: CmsDocument): string {
   );
 }
 
-const PAGE_IDS = [
-  "home",
-  "about",
-  "portfolio",
-  "contact",
-  "privacyPolicy",
-  "legalNotice",
-] as const;
-
 function getByPath(root: unknown, path: string): unknown {
   const trimmed = path.trim();
   if (!trimmed) {
@@ -593,21 +593,21 @@ function toRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
-function normalizePublicBaseUrl(value?: string): string {
+function normalizePublicBaseUrl(value?: string | null): string | null {
   const raw = value?.trim();
   if (!raw) {
-    return DEFAULT_PUBLIC_BASE_URL;
+    return null;
   }
 
   try {
     const parsed = new URL(raw);
     if (parsed.protocol !== "https:") {
-      return DEFAULT_PUBLIC_BASE_URL;
+      return null;
     }
 
     return parsed.toString().replace(/\/+$/, "");
   } catch {
-    return DEFAULT_PUBLIC_BASE_URL;
+    return null;
   }
 }
 
@@ -633,7 +633,10 @@ function isGeminiReferenceMimeType(value: string): boolean {
   return GEMINI_REFERENCE_MIME_TYPES.has(value);
 }
 
-function resolveReferenceImageUrl(rawValue: string, publicBaseUrl: string): string | null {
+function resolveReferenceImageUrl(
+  rawValue: string,
+  publicBaseUrl: string | null
+): string | null {
   const value = rawValue.trim();
   if (!value) {
     return null;
@@ -643,11 +646,14 @@ function resolveReferenceImageUrl(rawValue: string, publicBaseUrl: string): stri
     return value;
   }
 
-  if (value.startsWith("/")) {
+  if (value.startsWith("/") && publicBaseUrl) {
     return `${publicBaseUrl}${value}`;
   }
 
-  if (/^[a-z0-9][a-z0-9/_-]*\.(png|jpg|jpeg|webp|gif|bmp|svg)$/i.test(value)) {
+  if (
+    publicBaseUrl &&
+    /^[a-z0-9][a-z0-9/_-]*\.(png|jpg|jpeg|webp|gif|bmp|svg)$/i.test(value)
+  ) {
     return `${publicBaseUrl}/${value.replace(/^\/+/, "")}`;
   }
 
@@ -1309,7 +1315,7 @@ export async function runAgentTurn(
   input: AgentRunnerInput
 ): Promise<AgentRunnerResult> {
   const draft = await service.getContent("draft");
-  const currentPageId = inferPageIdFromPath(input.currentPath);
+  const currentPageId = inferPageIdFromPath(input.currentPath, draft);
   const currentPage = currentPageId ? draft.pages[currentPageId] : null;
   const modelConfig = service.getModelConfig();
   const model = resolveModel(input.modelId ?? modelConfig.defaultModelId, modelConfig);
@@ -1453,11 +1459,25 @@ export async function runAgentTurn(
       get_page: tool({
         description: "Read-only. Returns a single page payload and matching SEO entry by pageId.",
         inputSchema: z.object({
-          pageId: z.enum(PAGE_IDS),
+          pageId: z.string().min(1).max(120),
         }),
         execute: async ({ pageId }) => {
           const current = await service.getContent("draft");
-          const typedPageId = pageId as CmsPageId;
+          const typedPageId = pageId.trim();
+          const hasPage = Object.prototype.hasOwnProperty.call(
+            current.pages,
+            typedPageId
+          );
+          if (!hasPage) {
+            return {
+              pageId: typedPageId,
+              found: false,
+              page: null,
+              seo: null,
+              availablePageIds: Object.keys(current.pages),
+            };
+          }
+
           pushToolEvent({
             tool: "get_page",
             summary: `Read page '${typedPageId}'.`,
@@ -1467,8 +1487,10 @@ export async function runAgentTurn(
 
           return {
             pageId: typedPageId,
+            found: true,
             page: current.pages[typedPageId],
-            seo: current.seo[typedPageId],
+            seo: current.seo[typedPageId] ?? null,
+            availablePageIds: Object.keys(current.pages),
           };
         },
       }),
