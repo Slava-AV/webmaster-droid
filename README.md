@@ -32,8 +32,8 @@ Legacy package split has been collapsed into the current 4-package structure.
 
 Legacy registry status:
 
-- Unpublished: `@webmaster-droid/admin`, `@webmaster-droid/admin-ui`, `@webmaster-droid/api-aws`
-- Deprecated (kept for npm policy compatibility): `@webmaster-droid/react`, `@webmaster-droid/core`, `@webmaster-droid/storage-s3`, `@webmaster-droid/agent-ai-sdk`
+- Unpublished: `@webmaster-droid/admin`, `@webmaster-droid/admin-ui`, `@webmaster-droid/react`, `@webmaster-droid/api-aws`
+- Deprecated (kept for npm policy compatibility): `@webmaster-droid/core`, `@webmaster-droid/storage-s3`, `@webmaster-droid/agent-ai-sdk`
 
 ## Quick Start (New Website, Self-Hosted)
 

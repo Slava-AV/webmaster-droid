@@ -21,12 +21,11 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
-- Unpublished legacy packages from npm: `@webmaster-droid/admin`, `@webmaster-droid/admin-ui`, and `@webmaster-droid/api-aws`.
+- Unpublished legacy packages from npm: `@webmaster-droid/admin`, `@webmaster-droid/admin-ui`, `@webmaster-droid/react`, and `@webmaster-droid/api-aws`.
 
 ### Deprecated
 
 - Deprecated legacy packages on npm with migration guidance:
-  - `@webmaster-droid/react`
   - `@webmaster-droid/core`
   - `@webmaster-droid/storage-s3`
   - `@webmaster-droid/agent-ai-sdk`
