@@ -1,0 +1,4 @@
+version: 1
+display_name: Webmaster Droid Convert
+short_description: Convert static React/Next pages to webmaster-droid editable bindings.
+default_prompt: Convert this codebase to use @webmaster-droid/react editable components safely and incrementally.

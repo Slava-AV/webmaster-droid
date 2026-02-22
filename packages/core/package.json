@@ -1,0 +1,37 @@
+{
+  "name": "@webmaster-droid/core",
+  "version": "0.1.0-alpha.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@webmaster-droid/contracts": "*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Core patching and service abstractions for webmaster-droid.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Slava-AV/webmaster-droid.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Slava-AV/webmaster-droid/issues"
+  },
+  "homepage": "https://github.com/Slava-AV/webmaster-droid#readme"
+}

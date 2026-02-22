@@ -1,0 +1,64 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Workspace package name (e.g. @webmaster-droid/admin-ui)"
+        required: true
+        type: choice
+        options:
+          - "@webmaster-droid/contracts"
+          - "@webmaster-droid/core"
+          - "@webmaster-droid/storage-s3"
+          - "@webmaster-droid/agent-ai-sdk"
+          - "@webmaster-droid/api-aws"
+          - "@webmaster-droid/react"
+          - "@webmaster-droid/admin-ui"
+          - "@webmaster-droid/cli"
+      tag:
+        description: "npm dist-tag"
+        required: true
+        default: "alpha"
+        type: string
+      dry_run:
+        description: "Run npm publish in dry-run mode"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish (dry-run)
+        if: ${{ inputs.dry_run }}
+        run: npm publish --workspace "${{ inputs.package }}" --tag "${{ inputs.tag }}" --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --workspace "${{ inputs.package }}" --tag "${{ inputs.tag }}" --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

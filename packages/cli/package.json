@@ -1,0 +1,47 @@
+{
+  "name": "@webmaster-droid/cli",
+  "version": "0.1.0-alpha.0",
+  "type": "module",
+  "bin": {
+    "webmaster-droid": "dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@babel/generator": "^7.28.0",
+    "@babel/parser": "^7.28.0",
+    "@babel/traverse": "^7.28.0",
+    "@babel/types": "^7.28.0",
+    "commander": "^14.0.1",
+    "diff": "^8.0.2",
+    "glob": "^11.0.3",
+    "jiti": "^2.6.1"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit"
+  },
+  "description": "CLI for project bootstrap, schema, scan/codemod, deploy, and skill install.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Slava-AV/webmaster-droid.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Slava-AV/webmaster-droid/issues"
+  },
+  "homepage": "https://github.com/Slava-AV/webmaster-droid#readme"
+}

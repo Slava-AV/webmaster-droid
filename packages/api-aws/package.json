@@ -1,0 +1,45 @@
+{
+  "name": "@webmaster-droid/api-aws",
+  "version": "0.1.0-alpha.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@webmaster-droid/agent-ai-sdk": "*",
+    "@webmaster-droid/contracts": "*",
+    "@webmaster-droid/core": "*",
+    "@webmaster-droid/storage-s3": "*",
+    "aws-lambda": "^1.0.7",
+    "jose": "^6.1.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.160"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "AWS Lambda API runtime for self-hosted webmaster-droid backends.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Slava-AV/webmaster-droid.git",
+    "directory": "packages/api-aws"
+  },
+  "bugs": {
+    "url": "https://github.com/Slava-AV/webmaster-droid/issues"
+  },
+  "homepage": "https://github.com/Slava-AV/webmaster-droid#readme"
+}
