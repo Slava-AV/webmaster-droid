@@ -81,6 +81,7 @@ program
           "NEXT_PUBLIC_AGENT_API_BASE_URL=http://localhost:8787",
           "CMS_S3_BUCKET=",
           "CMS_S3_REGION=",
+          "CMS_PUBLIC_BASE_URL=https://your-domain.example",
           "SUPABASE_JWKS_URL=",
           "MODEL_OPENAI_ENABLED=true",
           "MODEL_GEMINI_ENABLED=true",

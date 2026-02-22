@@ -16,7 +16,8 @@ APIs may change between alpha releases.
 
 ## Packages
 
-- `@webmaster-droid/contracts`: Shared CMS document types, schema contracts, and defaults.
+- `@webmaster-droid/contracts`: Engine-level CMS document contracts.
+- `@webmaster-droid/contracts/starter`: Optional starter schema/content for bootstrap.
 - `@webmaster-droid/react`: UI primitives like `EditableText`, `EditableImage`, and related helpers.
 - `@webmaster-droid/admin-ui`: Drop-in admin runtime, auth-aware context, and chat/overlay UI.
 - `@webmaster-droid/core`: Core patching and CMS service abstractions.
@@ -38,11 +39,11 @@ Wrap your app once:
 ```tsx
 import { WebmasterDroidRuntime } from "@webmaster-droid/admin-ui";
 import "@webmaster-droid/admin-ui/styles.css";
-import { createDefaultCmsDocument } from "@webmaster-droid/contracts";
+import { createStarterCmsDocument } from "@webmaster-droid/contracts/starter";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <WebmasterDroidRuntime fallbackDocument={createDefaultCmsDocument()}>
+    <WebmasterDroidRuntime fallbackDocument={createStarterCmsDocument()}>
       {children}
     </WebmasterDroidRuntime>
   );
@@ -105,6 +106,9 @@ npx @webmaster-droid/cli init --framework next --backend aws
 npx @webmaster-droid/cli schema init
 npx @webmaster-droid/cli schema build --input cms/schema.webmaster.ts
 ```
+
+Important:
+- `CMS_PUBLIC_BASE_URL` must be set when image generation is enabled. The library no longer ships with any hardcoded production domain fallback.
 
 Build and deploy Lambda bundle with CLI helper:
 

@@ -1,7 +1,5 @@
-import {
-  createStarterCmsDocument,
-  type ModelProviderConfig,
-} from "@webmaster-droid/contracts";
+import type { ModelProviderConfig } from "@webmaster-droid/contracts";
+import { createStarterCmsDocument } from "@webmaster-droid/contracts/starter";
 import { CmsService } from "@webmaster-droid/core";
 import { S3CmsStorage } from "@webmaster-droid/storage-s3";
 
