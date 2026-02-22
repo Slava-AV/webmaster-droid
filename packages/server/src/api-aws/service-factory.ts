@@ -1,5 +1,7 @@
-import type { ModelProviderConfig } from "@webmaster-droid/contracts";
-import { createStarterCmsDocument } from "@webmaster-droid/contracts/starter";
+import {
+  createDefaultCmsDocument,
+  type ModelProviderConfig,
+} from "@webmaster-droid/contracts";
 import { CmsService } from "../core";
 import { S3CmsStorage } from "../storage-s3";
 
@@ -59,24 +61,10 @@ function normalizeAllowedPath(path: string): string | null {
   return `${normalized}/`;
 }
 
-function starterAllowedInternalPaths(): string[] {
-  const seed = createStarterCmsDocument();
-  const out = new Set<string>(["/"]);
-
-  for (const entry of Object.values(seed.seo)) {
-    const normalized = normalizeAllowedPath(entry.path);
-    if (normalized) {
-      out.add(normalized);
-    }
-  }
-
-  return Array.from(out);
-}
-
-function parseAllowedInternalPathsEnv(fallbackPaths: string[]): string[] {
+function parseAllowedInternalPathsEnv(): string[] {
   const raw = process.env.CMS_ALLOWED_INTERNAL_PATHS;
   if (!raw) {
-    return fallbackPaths;
+    return ["/"];
   }
 
   const normalized = raw
@@ -84,7 +72,7 @@ function parseAllowedInternalPathsEnv(fallbackPaths: string[]): string[] {
     .map((item) => normalizeAllowedPath(item))
     .filter((value): value is string => Boolean(value));
 
-  return normalized.length > 0 ? normalized : fallbackPaths;
+  return normalized.length > 0 ? normalized : ["/"];
 }
 
 export async function getCmsService(): Promise<CmsService> {
@@ -98,12 +86,12 @@ export async function getCmsService(): Promise<CmsService> {
 
       const service = new CmsService(storage, {
         modelConfig: buildModelConfig(),
-        allowedInternalPaths: parseAllowedInternalPathsEnv(starterAllowedInternalPaths()),
+        allowedInternalPaths: parseAllowedInternalPathsEnv(),
         publicAssetBaseUrl: parseOptionalEnv("CMS_PUBLIC_BASE_URL"),
         publicAssetPrefix: parseOptionalEnv("CMS_GENERATED_ASSET_PREFIX"),
       });
 
-      await service.ensureInitialized(createStarterCmsDocument());
+      await service.ensureInitialized(createDefaultCmsDocument());
       return service;
     })();
   }
