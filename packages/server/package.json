@@ -1,0 +1,63 @@
+{
+  "name": "@webmaster-droid/server",
+  "version": "0.1.0-alpha.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./storage-s3": {
+      "types": "./dist/storage-s3/index.d.ts",
+      "import": "./dist/storage-s3/index.js"
+    },
+    "./agent": {
+      "types": "./dist/agent/index.d.ts",
+      "import": "./dist/agent/index.js"
+    },
+    "./api-aws": {
+      "types": "./dist/api-aws/index.d.ts",
+      "import": "./dist/api-aws/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.29",
+    "@ai-sdk/openai": "^3.0.29",
+    "@aws-sdk/client-s3": "^3.888.0",
+    "@webmaster-droid/contracts": "^0.1.0-alpha.2",
+    "ai": "^6.0.86",
+    "aws-lambda": "^1.0.7",
+    "jose": "^6.1.0",
+    "zod": "^4.3.6"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsup src/index.ts src/core/index.ts src/storage-s3/index.ts src/agent/index.ts src/api-aws/index.ts --format esm --dts --clean"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.160"
+  },
+  "description": "Unified backend runtime: core service, S3 storage, AI agent, and AWS API adapters.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Slava-AV/webmaster-droid.git",
+    "directory": "packages/server"
+  },
+  "bugs": {
+    "url": "https://github.com/Slava-AV/webmaster-droid/issues"
+  },
+  "homepage": "https://github.com/Slava-AV/webmaster-droid#readme"
+}

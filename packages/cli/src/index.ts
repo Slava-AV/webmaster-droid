@@ -305,7 +305,7 @@ program
         const hasImport = body.some(
           (node) =>
             t.isImportDeclaration(node) &&
-            node.source.value === "@webmaster-droid/react" &&
+            node.source.value === "@webmaster-droid/web" &&
             node.specifiers.some(
               (specifier) =>
                 t.isImportSpecifier(specifier) &&
@@ -323,7 +323,7 @@ program
                   t.identifier("EditableText")
                 ),
               ],
-              t.stringLiteral("@webmaster-droid/react")
+              t.stringLiteral("@webmaster-droid/web")
             )
           );
         }

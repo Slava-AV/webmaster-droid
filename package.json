@@ -7,8 +7,8 @@
     "skills/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @webmaster-droid/contracts && npm run build --workspace @webmaster-droid/core && npm run build --workspace @webmaster-droid/storage-s3 && npm run build --workspace @webmaster-droid/agent-ai-sdk && npm run build --workspace @webmaster-droid/api-aws && npm run build --workspace @webmaster-droid/react && npm run build --workspace @webmaster-droid/admin-ui && npm run build --workspace @webmaster-droid/cli",
-    "typecheck": "npm run typecheck --workspace @webmaster-droid/contracts && npm run typecheck --workspace @webmaster-droid/core && npm run typecheck --workspace @webmaster-droid/storage-s3 && npm run typecheck --workspace @webmaster-droid/agent-ai-sdk && npm run typecheck --workspace @webmaster-droid/api-aws && npm run typecheck --workspace @webmaster-droid/react && npm run typecheck --workspace @webmaster-droid/admin-ui && npm run typecheck --workspace @webmaster-droid/cli",
+    "build": "npm run build --workspace @webmaster-droid/contracts && npm run build --workspace @webmaster-droid/web && npm run build --workspace @webmaster-droid/server && npm run build --workspace @webmaster-droid/cli",
+    "typecheck": "npm run typecheck --workspace @webmaster-droid/contracts && npm run typecheck --workspace @webmaster-droid/web && npm run typecheck --workspace @webmaster-droid/server && npm run typecheck --workspace @webmaster-droid/cli",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
   },

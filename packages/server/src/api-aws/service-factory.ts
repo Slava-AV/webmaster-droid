@@ -1,7 +1,7 @@
 import type { ModelProviderConfig } from "@webmaster-droid/contracts";
 import { createStarterCmsDocument } from "@webmaster-droid/contracts/starter";
-import { CmsService } from "@webmaster-droid/core";
-import { S3CmsStorage } from "@webmaster-droid/storage-s3";
+import { CmsService } from "../core";
+import { S3CmsStorage } from "../storage-s3";
 
 let servicePromise: Promise<CmsService> | null = null;
 

@@ -12,7 +12,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { REQUIRED_PUBLISH_CONFIRMATION, type RollbackRequest } from "@webmaster-droid/contracts";
-import { parseSelectedEditableFromTarget } from "@webmaster-droid/react";
+import { parseSelectedEditableFromTarget } from "./editables";
 
 import {
   deleteCheckpoint,

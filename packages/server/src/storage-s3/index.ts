@@ -14,7 +14,7 @@ import type {
   RollbackRequest,
 } from "@webmaster-droid/contracts";
 import { normalizeCmsDocument } from "@webmaster-droid/contracts";
-import type { StorageAdapter } from "@webmaster-droid/core";
+import type { StorageAdapter } from "../core";
 
 interface S3CmsStorageOptions {
   bucket: string;

@@ -13,11 +13,12 @@ const EDITABLE_ROOTS = ["pages.", "layout.", "seo.", "themeTokens."] as const;
 const MAX_PATH_LENGTH = 320;
 const MAX_LABEL_LENGTH = 120;
 const MAX_PREVIEW_LENGTH = 140;
+type AnyCmsDocument = CmsDocument<object, object, string>;
 
 type EditableMode = "live" | "draft";
 
 interface EditableContextValue {
-  document: CmsDocument;
+  document: AnyCmsDocument;
   mode: EditableMode;
   enabled: boolean;
 }
@@ -25,7 +26,7 @@ interface EditableContextValue {
 const EditableContext = createContext<EditableContextValue | null>(null);
 
 export function EditableProvider(props: {
-  document: CmsDocument;
+  document: AnyCmsDocument;
   mode?: EditableMode;
   enabled?: boolean;
   children: ReactNode;
@@ -252,7 +253,7 @@ export function parseSelectedEditableFromTarget(
   return selected;
 }
 
-function pickStringValue(document: CmsDocument, path: string, fallback: string): string {
+function pickStringValue(document: AnyCmsDocument, path: string, fallback: string): string {
   const value = readByPath(document, path);
   return typeof value === "string" && value.trim() ? value : fallback;
 }

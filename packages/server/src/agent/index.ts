@@ -12,7 +12,7 @@ import {
   type SelectedElementContext,
   type ThemeTokens,
 } from "@webmaster-droid/contracts";
-import { CmsService, createPatchFromAgentOperations } from "@webmaster-droid/core";
+import { CmsService, createPatchFromAgentOperations } from "../core";
 
 export interface AgentRunnerInput {
   prompt: string;

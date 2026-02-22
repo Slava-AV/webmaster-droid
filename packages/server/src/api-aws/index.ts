@@ -7,7 +7,7 @@ import type {
   SelectedElementContext,
   SelectedElementKind,
 } from "@webmaster-droid/contracts";
-import { runAgentTurn } from "@webmaster-droid/agent-ai-sdk";
+import { runAgentTurn } from "../agent";
 
 import { getBearerToken, verifyAdminToken } from "./auth";
 import { jsonResponse, normalizePath, parseJsonBody, sseResponse } from "./http";

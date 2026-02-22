@@ -1,5 +1,16 @@
 "use client";
 
+export {
+  EditableImage,
+  EditableLink,
+  EditableProvider,
+  EditableRichText,
+  EditableText,
+  editableMeta,
+  parseSelectedEditableFromTarget,
+  useEditableDocument,
+} from "./editables";
+
 export { buildApiUrl, resolveWebmasterDroidConfig } from "./config";
 export { WebmasterDroidProvider, useWebmasterDroid } from "./context";
 export { WebmasterDroidOverlay } from "./overlay";
