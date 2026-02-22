@@ -1,6 +1,6 @@
 {
   "name": "@webmaster-droid/core",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "type": "module",
   "exports": {
     ".": {
@@ -9,7 +9,7 @@
     }
   },
   "dependencies": {
-    "@webmaster-droid/contracts": "*"
+    "@webmaster-droid/contracts": "^0.1.0-alpha.1"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

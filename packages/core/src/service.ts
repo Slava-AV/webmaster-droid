@@ -23,15 +23,7 @@ import type {
 } from "./types";
 
 const DEFAULT_MAX_OPERATIONS = 25;
-const DEFAULT_ALLOWED_INTERNAL_PATHS = [
-  "/",
-  "/about/",
-  "/portfolio/",
-  "/contact/",
-  "/privacy-policy/",
-  "/legal-notice/",
-];
-const DEFAULT_PUBLIC_ASSET_BASE_URL = "https://kompernass.in";
+const DEFAULT_ALLOWED_INTERNAL_PATHS = ["/"];
 const DEFAULT_PUBLIC_ASSET_PREFIX = "assets/generated";
 const DEFAULT_GENERATED_IMAGE_CACHE_CONTROL = "public,max-age=31536000,immutable";
 
@@ -88,21 +80,21 @@ function comparableContentSnapshot(document: CmsDocument): string {
   });
 }
 
-function normalizePublicAssetBaseUrl(value?: string): string {
+function normalizePublicAssetBaseUrl(value?: string): string | null {
   const raw = value?.trim();
   if (!raw) {
-    return DEFAULT_PUBLIC_ASSET_BASE_URL;
+    return null;
   }
 
   try {
     const parsed = new URL(raw);
     if (parsed.protocol !== "https:") {
-      return DEFAULT_PUBLIC_ASSET_BASE_URL;
+      return null;
     }
 
     return parsed.toString().replace(/\/+$/, "");
   } catch {
-    return DEFAULT_PUBLIC_ASSET_BASE_URL;
+    return null;
   }
 }
 
@@ -169,7 +161,7 @@ export class CmsService {
   private readonly modelConfig: ModelProviderConfig;
   private readonly maxOperationsPerPatch: number;
   private readonly allowedInternalPaths: string[];
-  private readonly publicAssetBaseUrl: string;
+  private readonly publicAssetBaseUrl: string | null;
   private readonly publicAssetPrefix: string;
 
   constructor(storage: StorageAdapter, config: CmsServiceConfig) {
@@ -196,7 +188,7 @@ export class CmsService {
     return this.modelConfig;
   }
 
-  getPublicAssetBaseUrl(): string {
+  getPublicAssetBaseUrl(): string | null {
     return this.publicAssetBaseUrl;
   }
 
@@ -218,6 +210,12 @@ export class CmsService {
     const contentType = input.contentType.trim().toLowerCase().split(";", 1)[0];
     if (!contentType.startsWith("image/")) {
       throw new Error(`Generated content type is not an image: ${input.contentType}`);
+    }
+
+    if (!this.publicAssetBaseUrl) {
+      throw new Error(
+        "CMS public asset base URL is not configured. Set CMS_PUBLIC_BASE_URL to enable generated image URLs."
+      );
     }
 
     const key = buildGeneratedAssetKey(targetPath, this.publicAssetPrefix, contentType);
