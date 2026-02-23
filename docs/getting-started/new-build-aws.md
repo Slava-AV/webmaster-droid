@@ -1,11 +1,6 @@
-# Developer Getting Started: New Build
+# Developer Getting Started: New Build (AWS)
 
-Use this path when building a new React/Next.js site with Webmaster Droid from day one.
-
-Backend guides:
-
-- Supabase (default): [`new-build-supabase.md`](./new-build-supabase.md)
-- AWS (optional): [`new-build-aws.md`](./new-build-aws.md)
+Use this path when building a new React/Next.js site with Webmaster Droid on AWS.
 
 ## 1. Install packages
 
@@ -17,7 +12,7 @@ npm i @webmaster-droid/contracts @webmaster-droid/web @webmaster-droid/server
 
 ```bash
 npx @webmaster-droid/cli doctor
-npx @webmaster-droid/cli init --framework next
+npx @webmaster-droid/cli init --framework next --backend aws
 ```
 
 ## 3. Wrap runtime in app
@@ -45,25 +40,18 @@ export function HeroTitle() {
 
 Set required backend environment values including:
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_JWKS_URL`
-- `CMS_SUPABASE_BUCKET` (optional, default `webmaster-droid-cms`)
+- `CMS_S3_BUCKET`
+- `CMS_S3_REGION`
 - `CMS_PUBLIC_BASE_URL` (required for generated image URLs)
 - auth/model provider variables
 
-Use AWS instead:
+## 6. Deploy Lambda bundle
 
 ```bash
-npx @webmaster-droid/cli init --framework next --backend aws
+npx @webmaster-droid/cli deploy aws --entry src/api/handler.ts --region us-east-1 --functions functionOne,functionTwo
 ```
 
-For AWS variables, use:
-
-- `CMS_S3_BUCKET`
-- `CMS_S3_REGION`
-
-## 6. Verify
+## 7. Verify
 
 ```bash
 npm run build

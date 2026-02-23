@@ -61,16 +61,22 @@ program
   .command("init")
   .description("Initialize optional webmaster-droid config in current project")
   .option("--framework <framework>", "framework", "next")
-  .option("--backend <backend>", "backend", "aws")
+  .option("--backend <backend>", "backend (supabase|aws)", "supabase")
   .option("--out <dir>", "output dir", ".")
   .action(async (opts) => {
+    const backendRaw = String(opts.backend ?? "supabase").trim().toLowerCase();
+    if (backendRaw !== "supabase" && backendRaw !== "aws") {
+      throw new Error(`Unsupported backend '${opts.backend}'. Expected 'supabase' or 'aws'.`);
+    }
+
+    const backend = backendRaw as "supabase" | "aws";
     const outDir = path.resolve(process.cwd(), opts.out);
     const configPath = path.join(outDir, "webmaster-droid.config.ts");
     await ensureDir(configPath);
 
     const config = `export default {
   framework: "${opts.framework}",
-  backend: "${opts.backend}",
+  backend: "${backend}",
   apiBaseUrlEnv: "NEXT_PUBLIC_AGENT_API_BASE_URL"
 };\n`;
 
@@ -90,13 +96,26 @@ program
         envExample,
         [
           "NEXT_PUBLIC_AGENT_API_BASE_URL=http://localhost:8787",
-          "CMS_S3_BUCKET=",
-          "CMS_S3_REGION=",
-          "CMS_PUBLIC_BASE_URL=https://your-domain.example",
+          "",
+          "# Supabase (default backend)",
+          "NEXT_PUBLIC_SUPABASE_URL=",
+          "NEXT_PUBLIC_SUPABASE_ANON_KEY=",
+          "SUPABASE_URL=",
+          "SUPABASE_ANON_KEY=",
+          "SUPABASE_SERVICE_ROLE_KEY=",
           "SUPABASE_JWKS_URL=",
+          "CMS_SUPABASE_BUCKET=webmaster-droid-cms",
+          "CMS_STORAGE_PREFIX=cms",
+          "",
+          "# Shared runtime",
+          "CMS_PUBLIC_BASE_URL=https://your-domain.example",
           "MODEL_OPENAI_ENABLED=true",
           "MODEL_GEMINI_ENABLED=true",
           "DEFAULT_MODEL_ID=openai:gpt-5.2",
+          "",
+          "# AWS (optional backend)",
+          "CMS_S3_BUCKET=",
+          "CMS_S3_REGION=",
         ].join("\n") + "\n",
         "utf8"
       );
@@ -474,6 +493,55 @@ aws
     for (const fn of functions) {
       await run(`aws lambda update-function-code --region ${opts.region} --function-name ${fn} --zip-file fileb://${tmpDir}/lambda.zip >/dev/null`);
       await run(`aws lambda wait function-updated --region ${opts.region} --function-name ${fn}`);
+    }
+  });
+
+const supabase = deploy
+  .command("supabase")
+  .description("Deploy Supabase edge functions");
+
+supabase
+  .requiredOption("--project-ref <ref>", "Supabase project reference")
+  .requiredOption("--functions <names>", "comma-separated function names")
+  .option("--env-file <path>", "path to env file for function deployment")
+  .option("--no-verify-jwt", "disable JWT verification for deployed functions")
+  .action(async (opts) => {
+    const functions = String(opts.functions)
+      .split(",")
+      .map((item: string) => item.trim())
+      .filter(Boolean);
+
+    if (functions.length === 0) {
+      throw new Error("No function names provided.");
+    }
+
+    const run = (cmd: string) =>
+      new Promise<void>((resolve, reject) => {
+        const child = spawn(cmd, { stdio: "inherit", shell: true });
+        child.on("exit", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Command failed: ${cmd}`));
+          }
+        });
+      });
+
+    for (const fn of functions) {
+      const parts = [
+        "supabase functions deploy",
+        fn,
+        "--project-ref",
+        opts.projectRef,
+      ];
+      if (opts.envFile) {
+        parts.push("--env-file", opts.envFile);
+      }
+      if (opts.verifyJwt === false) {
+        parts.push("--no-verify-jwt");
+      }
+
+      await run(parts.join(" "));
     }
   });
 

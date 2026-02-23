@@ -141,7 +141,7 @@ export function buildAgentTools(input: BuildAgentToolsInput) {
     }),
     generate_image: tool({
       description:
-        "Generates an image with Gemini Image Preview, uploads it to S3, and stages a CMS image URL update. Edit-mode references must be JPEG or PNG.",
+        "Generates an image with Gemini Image Preview, uploads it to the configured storage backend, and stages a CMS image URL update. Edit-mode references must be JPEG or PNG.",
       inputSchema: z.object({
         targetPath: z.string().min(3).max(320),
         prompt: z.string().min(3).max(2500),
