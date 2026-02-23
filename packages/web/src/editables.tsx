@@ -283,7 +283,8 @@ function pickStringValue(
   path: string,
   fallback: string | undefined,
   componentName: string,
-  fallbackPropName: string
+  fallbackPropName: string,
+  missingBehavior: "throw" | "empty" = "throw"
 ): string {
   const value = readByPath(document, path);
   if (typeof value === "string" && value.trim()) {
@@ -294,9 +295,13 @@ function pickStringValue(
     return fallback;
   }
 
-  throw new Error(
-    `${componentName} missing content for "${path}". Provide a CMS value or set \`${fallbackPropName}\`.`
-  );
+  const message = `${componentName} missing content for "${path}". Provide a CMS value or set \`${fallbackPropName}\`.`;
+  if (missingBehavior === "empty") {
+    console.error(message);
+    return "";
+  }
+
+  throw new Error(message);
 }
 
 function sanitizeRichTextHtml(html: string): string {
@@ -330,7 +335,7 @@ export function EditableText({
   ...rest
 }: EditableTextProps) {
   const { document, enabled } = useEditableDocument();
-  const value = pickStringValue(document, path, fallback, "EditableText", "fallback");
+  const value = pickStringValue(document, path, fallback, "EditableText", "fallback", "empty");
 
   const attrs = enabled
     ? editableMeta({
@@ -360,7 +365,14 @@ export function EditableRichText({
   ...rest
 }: EditableRichTextProps) {
   const { document, enabled } = useEditableDocument();
-  const value = pickStringValue(document, path, fallback, "EditableRichText", "fallback");
+  const value = pickStringValue(
+    document,
+    path,
+    fallback,
+    "EditableRichText",
+    "fallback",
+    "empty"
+  );
   const sanitizedHtml = sanitizeRichTextHtml(value);
 
   const attrs = enabled
@@ -396,9 +408,23 @@ export function EditableImage({
   ...rest
 }: EditableImageProps) {
   const { document, enabled } = useEditableDocument();
-  const src = pickStringValue(document, path, fallbackSrc, "EditableImage", "fallbackSrc");
+  const src = pickStringValue(
+    document,
+    path,
+    fallbackSrc,
+    "EditableImage",
+    "fallbackSrc",
+    "empty"
+  );
   const alt = altPath
-    ? pickStringValue(document, altPath, fallbackAlt, "EditableImage", "fallbackAlt")
+    ? pickStringValue(
+        document,
+        altPath,
+        fallbackAlt,
+        "EditableImage",
+        "fallbackAlt",
+        "empty"
+      )
     : (fallbackAlt ?? "");
 
   const attrs = enabled
@@ -431,13 +457,21 @@ export function EditableLink({
   ...rest
 }: EditableLinkProps) {
   const { document, enabled } = useEditableDocument();
-  const href = pickStringValue(document, hrefPath, fallbackHref, "EditableLink", "fallbackHref");
+  const href = pickStringValue(
+    document,
+    hrefPath,
+    fallbackHref,
+    "EditableLink",
+    "fallbackHref",
+    "empty"
+  );
   const text = pickStringValue(
     document,
     labelPath,
     fallbackLabel,
     "EditableLink",
-    "fallbackLabel"
+    "fallbackLabel",
+    "empty"
   );
 
   const attrs = enabled

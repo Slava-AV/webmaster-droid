@@ -58,7 +58,7 @@ export function HeroTitle() {
 }
 ```
 
-`fallback` props are optional. If both CMS value and fallback are missing, components throw an explicit runtime error.
+`fallback` props are optional. If both CMS value and fallback are missing, editable components log an error and render empty content for that field.
 
 ## Existing Website Conversion
 
