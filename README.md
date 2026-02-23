@@ -35,6 +35,12 @@ Initialize project configuration:
 
 ```bash
 npx @webmaster-droid/cli doctor
+npx @webmaster-droid/cli init --framework next
+```
+
+Use AWS instead:
+
+```bash
 npx @webmaster-droid/cli init --framework next --backend aws
 ```
 
@@ -60,13 +66,13 @@ Read: [`docs/migration/optional-skill.md`](docs/migration/optional-skill.md)
 - Content editing guide: [`docs/guides/content-edits.md`](docs/guides/content-edits.md)
 - Image workflows guide: [`docs/guides/image-workflows.md`](docs/guides/image-workflows.md)
 - Reliability and safety: [`docs/guides/reliability-and-safety.md`](docs/guides/reliability-and-safety.md)
-- API contracts: [`docs/api/openapi.api-aws.yaml`](docs/api/openapi.api-aws.yaml)
+- API contracts: [`docs/api/openapi.api.yaml`](docs/api/openapi.api.yaml)
 
 ## Packages
 
 - `@webmaster-droid/contracts`: shared CMS contracts and types.
 - `@webmaster-droid/web`: editable components, runtime context, and admin overlay.
-- `@webmaster-droid/server`: backend service, AI agent, storage, and AWS API handlers.
+- `@webmaster-droid/server`: backend service, AI agent, storage adapters, and API adapters for Supabase/AWS.
 - `@webmaster-droid/cli`: initialization, schema, scan/codemod, doctor, deploy, and skill install tools.
 
 ## Security

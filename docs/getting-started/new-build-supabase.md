@@ -1,11 +1,6 @@
-# Developer Getting Started: New Build
+# Developer Getting Started: New Build (Supabase)
 
-Use this path when building a new React/Next.js site with Webmaster Droid from day one.
-
-Backend guides:
-
-- Supabase (default): [`new-build-supabase.md`](./new-build-supabase.md)
-- AWS (optional): [`new-build-aws.md`](./new-build-aws.md)
+Use this path when building a new React/Next.js site with Webmaster Droid on Supabase.
 
 ## 1. Install packages
 
@@ -49,21 +44,16 @@ Set required backend environment values including:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_JWKS_URL`
 - `CMS_SUPABASE_BUCKET` (optional, default `webmaster-droid-cms`)
-- `CMS_PUBLIC_BASE_URL` (required for generated image URLs)
+- `CMS_PUBLIC_BASE_URL` (recommended for generated image URLs)
 - auth/model provider variables
 
-Use AWS instead:
+## 6. Deploy edge functions
 
 ```bash
-npx @webmaster-droid/cli init --framework next --backend aws
+npx @webmaster-droid/cli deploy supabase --project-ref your-project-ref --functions webmaster-api
 ```
 
-For AWS variables, use:
-
-- `CMS_S3_BUCKET`
-- `CMS_S3_REGION`
-
-## 6. Verify
+## 7. Verify
 
 ```bash
 npm run build

@@ -12,9 +12,12 @@
 ## For developers
 
 - [New build integration](getting-started/new-build.md)
+- [New build (Supabase)](getting-started/new-build-supabase.md)
+- [New build (AWS)](getting-started/new-build-aws.md)
 - [Migrate an existing website](getting-started/migrate-existing.md)
 - [Optional migration skill](migration/optional-skill.md)
-- [API contract](api/openapi.api-aws.yaml)
+- [API contract](api/openapi.api.yaml)
+- [AWS API contract](api/openapi.api-aws.yaml)
 - [Chat stream event schema](api/chat-stream-events.schema.json)
 
 ## CLI JSON output schemas
