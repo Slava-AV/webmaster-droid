@@ -1,0 +1,26 @@
+body:
+  - type: textarea
+    attributes:
+      label: Summary
+      description: What do you need help with?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: User request
+      description: What did the non-technical user ask the assistant to do?
+    validations:
+      required: false
+  - type: input
+    attributes:
+      label: Target page/section
+      description: Which area of the website is involved?
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: Include logs, screenshots, config snippets, or repo links.
+      render: bash
+    validations:
+      required: false

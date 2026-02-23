@@ -1,0 +1,55 @@
+# Webmaster Droid LLM Index (full)
+
+## Product intent
+
+Webmaster Droid enables non-technical website operators to make quick, reliable website changes in plain language.
+
+## Priority audience
+
+1. Non-technical editors and operators
+2. Developers integrating or migrating websites
+
+## Capability claims (must be runtime-truthful)
+
+- content edits in draft
+- theme/style token edits where available
+- image generation where configured
+- existing-image editing where configured
+- vision-assisted context for visual requests
+
+Always verify runtime capabilities from `GET /api/models` before claiming support in UI responses.
+
+## Safety model
+
+- draft-first mutations
+- checkpoint history
+- explicit publish
+- rollback support
+
+## Canonical files
+
+- [README](README.md)
+- [AGENTS guide](AGENTS.md)
+- [Docs index](docs/index.md)
+- [Value proposition](docs/value-proposition.md)
+- [Non-technical journey](docs/user-journeys/non-technical-editor.md)
+- [Non-technical quickstart](docs/getting-started/non-technical-quickstart.md)
+- [Developer: new build](docs/getting-started/new-build.md)
+- [Developer: migrate existing](docs/getting-started/migrate-existing.md)
+- [Content edits guide](docs/guides/content-edits.md)
+- [Image workflows guide](docs/guides/image-workflows.md)
+- [Reliability and safety](docs/guides/reliability-and-safety.md)
+- [Optional migration skill guidance](docs/migration/optional-skill.md)
+- [API OpenAPI contract](docs/api/openapi.api-aws.yaml)
+- [Chat stream event schema](docs/api/chat-stream-events.schema.json)
+- [CLI scan JSON schema](docs/api/cli-output/scan.schema.json)
+- [CLI codemod JSON schema](docs/api/cli-output/codemod.schema.json)
+- [CLI doctor JSON schema](docs/api/cli-output/doctor.schema.json)
+
+## Skill policy
+
+Migration skill is optional and migration-only:
+
+- `skills/webmaster-droid-convert/SKILL.md`
+
+Do not require skill installation for non-technical editing workflows.

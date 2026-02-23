@@ -1,0 +1,28 @@
+name: Docs Quality
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=optional
+
+      - name: Check docs links
+        run: node ./scripts/check-doc-links.mjs
+
+      - name: Check llms integrity
+        run: node ./scripts/check-llms-integrity.mjs

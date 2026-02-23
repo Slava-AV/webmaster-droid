@@ -1,136 +1,74 @@
 # webmaster-droid
 
-Composable toolkit for building or upgrading React/Next.js websites with an **agent-assisted editable CMS layer**.
+`webmaster-droid` helps non-technical website owners make quick, reliable changes in plain language.
 
-`webmaster-droid` is self-hosted first: you install React editing components, an admin runtime UI, and backend API packages, then run on your own infrastructure.
+It provides an in-site admin chat that understands intent, edits content safely in draft mode, can generate or edit images, and uses visual context from existing site images when needed.
 
-## Status
+## Core Value
 
-Alpha (`0.1.0-alpha.*`).
-APIs may change between alpha releases.
+- Non-technical editors can request website updates without writing code.
+- Changes are reliable: draft-first, checkpointed history, explicit publish.
+- Image workflows are built in: generate new images, edit existing images, and use vision context.
 
-## Who It Is For
+## Use as an editor (non-technical)
 
-- **New website builds**: start with `Editable*` components from day one and keep all key content CMS-editable.
-- **Existing website conversion**: convert static JSX content incrementally using scan/codemod + agent skill workflow.
+Start here if you only want to edit website content safely.
 
-## Packages
+1. Open the admin overlay in your website.
+2. Ask for changes in plain language.
+3. Review draft updates and history.
+4. Publish only when ready.
 
-- `@webmaster-droid/contracts`: Engine-level CMS document contracts.
-- `@webmaster-droid/web`: Unified web package (editable React primitives + admin runtime UI/overlay).
-- `@webmaster-droid/server`: Unified backend package (core service + S3 storage + AI agent + AWS API runtime).
-- `@webmaster-droid/cli`: Project bootstrap, schema, scan/codemod, skill install, and deploy helpers.
+Read: [`docs/getting-started/non-technical-quickstart.md`](docs/getting-started/non-technical-quickstart.md)
 
-## Quick Start (Seedless, Self-Hosted)
+## Integrate as a developer
 
-Install frontend packages:
+Use this path to add Webmaster Droid to a React/Next.js project.
 
-```bash
-npm i @webmaster-droid/contracts @webmaster-droid/web
-```
-
-Wrap your app once:
-
-```tsx
-import { WebmasterDroidRuntime } from "@webmaster-droid/web";
-import "@webmaster-droid/web/styles.css";
-
-export function AppProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <WebmasterDroidRuntime>{children}</WebmasterDroidRuntime>
-  );
-}
-```
-
-Use editable components in new pages/components:
-
-```tsx
-import { EditableText } from "@webmaster-droid/web";
-
-export function HeroTitle() {
-  return (
-    <EditableText
-      path="pages.home.hero.title"
-      fallback="Build your website faster"
-      as="h1"
-    />
-  );
-}
-```
-
-`fallback` props are optional. If both CMS value and fallback are missing, editable components log an error and render empty content for that field.
-
-## Existing Website Conversion
-
-For existing static JSX websites, use the CLI conversion path first, then refine manually.
+Install packages:
 
 ```bash
-npx @webmaster-droid/cli scan apps/site/src --out .webmaster-droid/scan-report.json
-npx @webmaster-droid/cli codemod apps/site/src --out .webmaster-droid/codemod-report.json
-npx @webmaster-droid/cli codemod apps/site/src --apply
+npm i @webmaster-droid/contracts @webmaster-droid/web @webmaster-droid/server
 ```
 
-Install bundled Codex skill for assisted conversion:
-
-```bash
-CODEX_HOME=~/.codex npx @webmaster-droid/cli skill install
-```
-
-### Typical Conversion Workflow
-
-1. Run `scan` to identify static text/attributes.
-2. Run `codemod` in preview mode and review patch report.
-3. Apply codemod and fix edge cases manually.
-4. Use the `webmaster-droid-convert` skill for semantic/path cleanup.
-5. Validate with local build/typecheck and runtime editing tests.
-
-## Backend (Shared by Both Paths, Self-Hosted AWS)
-
-Install backend/runtime packages:
-
-```bash
-npm i @webmaster-droid/server
-```
-
-Bootstrap config and run environment checks:
+Initialize project configuration:
 
 ```bash
 npx @webmaster-droid/cli doctor
 npx @webmaster-droid/cli init --framework next --backend aws
 ```
 
-Optional schema helpers:
+Read:
+
+- [`docs/getting-started/new-build.md`](docs/getting-started/new-build.md)
+- [`docs/getting-started/migrate-existing.md`](docs/getting-started/migrate-existing.md)
+
+## Optional migration acceleration skill
+
+Migration skill is optional and developer-facing. It is not required for day-to-day non-technical editing.
 
 ```bash
-npx @webmaster-droid/cli schema init
-npx @webmaster-droid/cli schema build --input cms/schema.webmaster.ts
+CODEX_HOME=~/.codex npx @webmaster-droid/cli skill install
 ```
 
-Important:
-- `CMS_PUBLIC_BASE_URL` must be set when image generation is enabled. The library no longer ships with any hardcoded production domain fallback.
+Read: [`docs/migration/optional-skill.md`](docs/migration/optional-skill.md)
 
-Build and deploy Lambda bundle with CLI helper:
+## Documentation map
 
-```bash
-npx @webmaster-droid/cli deploy aws \
-  --entry apps/api/src/lambda.ts \
-  --region eu-central-1 \
-  --functions webmaster-droid-api
-```
+- Value proposition: [`docs/value-proposition.md`](docs/value-proposition.md)
+- Non-technical editor journey: [`docs/user-journeys/non-technical-editor.md`](docs/user-journeys/non-technical-editor.md)
+- Content editing guide: [`docs/guides/content-edits.md`](docs/guides/content-edits.md)
+- Image workflows guide: [`docs/guides/image-workflows.md`](docs/guides/image-workflows.md)
+- Reliability and safety: [`docs/guides/reliability-and-safety.md`](docs/guides/reliability-and-safety.md)
+- API contracts: [`docs/api/openapi.api-aws.yaml`](docs/api/openapi.api-aws.yaml)
 
-## Local Development
+## Packages
 
-```bash
-npm install
-npm run build
-npm run typecheck
-```
-
-## Repository
-
-- GitHub: [Slava-AV/webmaster-droid](https://github.com/Slava-AV/webmaster-droid)
-- License: MIT
+- `@webmaster-droid/contracts`: shared CMS contracts and types.
+- `@webmaster-droid/web`: editable components, runtime context, and admin overlay.
+- `@webmaster-droid/server`: backend service, AI agent, storage, and AWS API handlers.
+- `@webmaster-droid/cli`: initialization, schema, scan/codemod, doctor, deploy, and skill install tools.
 
 ## Security
 
-Report vulnerabilities via the process in `SECURITY.md`.
+Report vulnerabilities via [`SECURITY.md`](SECURITY.md).

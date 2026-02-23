@@ -1,0 +1,14 @@
+# Webmaster Droid LLM Index (concise)
+
+Use these files as the primary source of truth.
+
+- [Repository README](README.md)
+- [Agent Guide](AGENTS.md)
+- [Docs Index](docs/index.md)
+- [Value Proposition](docs/value-proposition.md)
+- [Non-Technical Quickstart](docs/getting-started/non-technical-quickstart.md)
+- [Content Edits Guide](docs/guides/content-edits.md)
+- [Image Workflows Guide](docs/guides/image-workflows.md)
+- [Reliability and Safety](docs/guides/reliability-and-safety.md)
+- [API Contract](docs/api/openapi.api-aws.yaml)
+- [Optional Migration Skill](docs/migration/optional-skill.md)

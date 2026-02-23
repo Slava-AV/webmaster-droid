@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Support Discussion
+    url: https://github.com/Slava-AV/webmaster-droid/discussions/new?category=help
+    about: Ask implementation or usage questions in Discussions.

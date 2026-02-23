@@ -8,13 +8,40 @@ import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { glob } from "glob";
 import { parse } from "@babel/parser";
-import traverse from "@babel/traverse";
+import traverseModule from "@babel/traverse";
 import * as t from "@babel/types";
 import { createTwoFilesPatch } from "diff";
 import { createJiti } from "jiti";
 import { normalizeText, transformEditableTextCodemod } from "./codemod";
 
 const program = new Command();
+const CLI_VERSION = "0.1.0-alpha.0";
+const traverse =
+  (traverseModule as unknown as { default?: typeof traverseModule }).default ??
+  traverseModule;
+
+interface CliEnvelope {
+  ok: boolean;
+  command: string;
+  version: string;
+  timestamp: string;
+  data?: Record<string, unknown>;
+  errors?: string[];
+}
+
+function emitCliEnvelope(payload: CliEnvelope, isError = false) {
+  const out = JSON.stringify(payload, null, 2);
+  if (isError) {
+    console.error(out);
+    return;
+  }
+
+  console.log(out);
+}
+
+function errorToMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 async function ensureDir(filePath: string) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -28,7 +55,7 @@ async function readJson<T>(filePath: string): Promise<T> {
 program
   .name("webmaster-droid")
   .description("Webmaster Droid CLI")
-  .version("0.1.0-alpha.0");
+  .version(CLI_VERSION);
 
 program
   .command("init")
@@ -142,80 +169,108 @@ program
   .description("Scan source files for static content candidates")
   .argument("<srcDir>", "source directory")
   .option("--out <file>", "report output", ".webmaster-droid/scan-report.json")
+  .option("--json", "emit machine-readable JSON output", false)
   .action(async (srcDir, opts) => {
-    const root = path.resolve(process.cwd(), srcDir);
-    const files = await glob("**/*.{ts,tsx,js,jsx}", {
-      cwd: root,
-      absolute: true,
-      ignore: ["**/*.d.ts", "**/node_modules/**", "**/.next/**", "**/dist/**"],
-    });
-
-    const findings: Array<Record<string, unknown>> = [];
-
-    for (const file of files) {
-      const code = await fs.readFile(file, "utf8");
-      const ast = parse(code, {
-        sourceType: "module",
-        plugins: ["typescript", "jsx"],
+    try {
+      const root = path.resolve(process.cwd(), srcDir);
+      const files = await glob("**/*.{ts,tsx,js,jsx}", {
+        cwd: root,
+        absolute: true,
+        ignore: ["**/*.d.ts", "**/node_modules/**", "**/.next/**", "**/dist/**"],
       });
 
-      traverse(ast, {
-        JSXText(pathNode) {
-          const text = normalizeText(pathNode.node.value);
-          if (!text || text.length < 3) {
-            return;
-          }
+      const findings: Array<Record<string, unknown>> = [];
 
-          findings.push({
-            type: "jsx-text",
-            file: path.relative(process.cwd(), file),
-            line: pathNode.node.loc?.start.line,
-            column: pathNode.node.loc?.start.column,
-            text,
-          });
-        },
-        JSXAttribute(pathNode) {
-          const name = t.isJSXIdentifier(pathNode.node.name) ? pathNode.node.name.name : "";
-          if (!["src", "href", "alt", "title"].includes(name)) {
-            return;
-          }
+      for (const file of files) {
+        const code = await fs.readFile(file, "utf8");
+        const ast = parse(code, {
+          sourceType: "module",
+          plugins: ["typescript", "jsx"],
+        });
 
-          const valueNode = pathNode.node.value;
-          if (!valueNode || !t.isStringLiteral(valueNode)) {
-            return;
-          }
+        traverse(ast, {
+          JSXText(pathNode) {
+            const text = normalizeText(pathNode.node.value);
+            if (!text || text.length < 3) {
+              return;
+            }
 
-          findings.push({
-            type: "jsx-attr",
-            attr: name,
-            file: path.relative(process.cwd(), file),
-            line: valueNode.loc?.start.line,
-            column: valueNode.loc?.start.column,
-            text: valueNode.value,
-          });
-        },
-      });
-    }
+            findings.push({
+              type: "jsx-text",
+              file: path.relative(process.cwd(), file),
+              line: pathNode.node.loc?.start.line,
+              column: pathNode.node.loc?.start.column,
+              text,
+            });
+          },
+          JSXAttribute(pathNode) {
+            const name = t.isJSXIdentifier(pathNode.node.name) ? pathNode.node.name.name : "";
+            if (!["src", "href", "alt", "title"].includes(name)) {
+              return;
+            }
 
-    const output = path.resolve(process.cwd(), opts.out);
-    await ensureDir(output);
-    await fs.writeFile(
-      output,
-      JSON.stringify(
+            const valueNode = pathNode.node.value;
+            if (!valueNode || !t.isStringLiteral(valueNode)) {
+              return;
+            }
+
+            findings.push({
+              type: "jsx-attr",
+              attr: name,
+              file: path.relative(process.cwd(), file),
+              line: valueNode.loc?.start.line,
+              column: valueNode.loc?.start.column,
+              text: valueNode.value,
+            });
+          },
+        });
+      }
+
+      const output = path.resolve(process.cwd(), opts.out);
+      const report = {
+        createdAt: new Date().toISOString(),
+        source: root,
+        totalFiles: files.length,
+        totalFindings: findings.length,
+        findings,
+      };
+      await ensureDir(output);
+      await fs.writeFile(output, JSON.stringify(report, null, 2) + "\n", "utf8");
+
+      if (opts.json) {
+        emitCliEnvelope({
+          ok: true,
+          command: "scan",
+          version: CLI_VERSION,
+          timestamp: new Date().toISOString(),
+          data: {
+            reportPath: output,
+            source: root,
+            totalFiles: files.length,
+            totalFindings: findings.length,
+          },
+        });
+        return;
+      }
+
+      console.log(`Scan complete. Findings: ${findings.length}. Report: ${output}`);
+    } catch (error) {
+      if (!opts.json) {
+        throw error;
+      }
+
+      emitCliEnvelope(
         {
-          createdAt: new Date().toISOString(),
-          source: root,
-          totalFiles: files.length,
-          totalFindings: findings.length,
-          findings,
+          ok: false,
+          command: "scan",
+          version: CLI_VERSION,
+          timestamp: new Date().toISOString(),
+          errors: [errorToMessage(error)],
         },
-        null,
-        2
-      ) + "\n",
-      "utf8"
-    );
-
-    console.log(`Scan complete. Findings: ${findings.length}. Report: ${output}`);
+        true
+      );
+      process.exitCode = 1;
+    }
   });
 
 program
@@ -224,60 +279,91 @@ program
   .argument("<srcDir>", "source directory")
   .option("--apply", "write file changes", false)
   .option("--out <file>", "report output", ".webmaster-droid/codemod-report.json")
+  .option("--json", "emit machine-readable JSON output", false)
   .action(async (srcDir, opts) => {
-    const root = path.resolve(process.cwd(), srcDir);
-    const files = await glob("**/*.{tsx,jsx}", {
-      cwd: root,
-      absolute: true,
-      ignore: ["**/node_modules/**", "**/.next/**", "**/dist/**"],
-    });
-
-    const changed: Array<Record<string, unknown>> = [];
-
-    for (const file of files) {
-      const source = await fs.readFile(file, "utf8");
-      const transformed = transformEditableTextCodemod(source, file, process.cwd());
-      if (!transformed.changed) {
-        continue;
-      }
-      const next = transformed.next;
-
-      const relFile = path.relative(process.cwd(), file);
-      changed.push({
-        file: relFile,
-        patch: createTwoFilesPatch(relFile, relFile, source, next),
+    try {
+      const root = path.resolve(process.cwd(), srcDir);
+      const files = await glob("**/*.{tsx,jsx}", {
+        cwd: root,
+        absolute: true,
+        ignore: ["**/node_modules/**", "**/.next/**", "**/dist/**"],
       });
 
-      if (opts.apply) {
-        await fs.writeFile(file, next, "utf8");
+      const changed: Array<Record<string, unknown>> = [];
+
+      for (const file of files) {
+        const source = await fs.readFile(file, "utf8");
+        const transformed = transformEditableTextCodemod(source, file, process.cwd());
+        if (!transformed.changed) {
+          continue;
+        }
+        const next = transformed.next;
+
+        const relFile = path.relative(process.cwd(), file);
+        changed.push({
+          file: relFile,
+          patch: createTwoFilesPatch(relFile, relFile, source, next),
+        });
+
+        if (opts.apply) {
+          await fs.writeFile(file, next, "utf8");
+        }
       }
-    }
 
-    const output = path.resolve(process.cwd(), opts.out);
-    await ensureDir(output);
-    await fs.writeFile(
-      output,
-      JSON.stringify(
+      const output = path.resolve(process.cwd(), opts.out);
+      const report = {
+        createdAt: new Date().toISOString(),
+        source: root,
+        apply: Boolean(opts.apply),
+        changedFiles: changed.length,
+        changes: changed,
+      };
+      await ensureDir(output);
+      await fs.writeFile(output, JSON.stringify(report, null, 2) + "\n", "utf8");
+
+      if (opts.json) {
+        emitCliEnvelope({
+          ok: true,
+          command: "codemod",
+          version: CLI_VERSION,
+          timestamp: new Date().toISOString(),
+          data: {
+            reportPath: output,
+            source: root,
+            apply: Boolean(opts.apply),
+            changedFiles: changed.length,
+          },
+        });
+        return;
+      }
+
+      console.log(
+        `${opts.apply ? "Applied" : "Previewed"} codemod changes: ${changed.length}. Report: ${output}`
+      );
+    } catch (error) {
+      if (!opts.json) {
+        throw error;
+      }
+
+      emitCliEnvelope(
         {
-          createdAt: new Date().toISOString(),
-          source: root,
-          apply: Boolean(opts.apply),
-          changedFiles: changed.length,
-          changes: changed,
+          ok: false,
+          command: "codemod",
+          version: CLI_VERSION,
+          timestamp: new Date().toISOString(),
+          errors: [errorToMessage(error)],
         },
-        null,
-        2
-      ) + "\n",
-      "utf8"
-    );
-
-    console.log(`${opts.apply ? "Applied" : "Previewed"} codemod changes: ${changed.length}. Report: ${output}`);
+        true
+      );
+      process.exitCode = 1;
+    }
   });
 
 program
   .command("doctor")
   .description("Validate local environment for webmaster-droid")
-  .action(async () => {
+  .option("--json", "emit machine-readable JSON output", false)
+  .action(async (opts) => {
     const issues: string[] = [];
 
     const major = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
@@ -292,11 +378,42 @@ program
     }
 
     if (issues.length > 0) {
+      if (opts.json) {
+        emitCliEnvelope(
+          {
+            ok: false,
+            command: "doctor",
+            version: CLI_VERSION,
+            timestamp: new Date().toISOString(),
+            data: {
+              checksPassed: false,
+            },
+            errors: issues,
+          },
+          true
+        );
+        process.exitCode = 1;
+        return;
+      }
+
       console.error("Doctor found issues:");
       for (const issue of issues) {
         console.error(`- ${issue}`);
       }
       process.exitCode = 1;
+      return;
+    }
+
+    if (opts.json) {
+      emitCliEnvelope({
+        ok: true,
+        command: "doctor",
+        version: CLI_VERSION,
+        timestamp: new Date().toISOString(),
+        data: {
+          checksPassed: true,
+        },
+      });
       return;
     }
 

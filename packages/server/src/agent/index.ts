@@ -46,6 +46,11 @@ export interface AgentRunnerResult {
   toolEvents: Array<{ tool: string; summary: string }>;
   updatedDraft: CmsDocument;
   mutationsApplied: boolean;
+  mutationSummary?: {
+    contentOperations: number;
+    themeTokenChanges: number;
+    imageOperations: number;
+  };
 }
 
 const STATIC_TOOL_NAMES = [
@@ -242,6 +247,9 @@ export async function runAgentTurn(
   const hasContentChanges = stagedContentOperations.length > 0;
   const hasThemeChanges = Object.keys(stagedThemeTokens).length > 0;
   const mutationsApplied = hasContentChanges || hasThemeChanges;
+  const imageOperations = stagedContentOperations.filter((operation) =>
+    /(?:^|[.\]])image(?:$|[.\[])/i.test(operation.path)
+  ).length;
 
   let updatedDraft: CmsDocument;
   if (mutationsApplied) {
@@ -283,5 +291,12 @@ export async function runAgentTurn(
     toolEvents,
     updatedDraft,
     mutationsApplied,
+    mutationSummary: mutationsApplied
+      ? {
+          contentOperations: stagedContentOperations.length,
+          themeTokenChanges: Object.keys(stagedThemeTokens).length,
+          imageOperations,
+        }
+      : undefined,
   };
 }

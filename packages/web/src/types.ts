@@ -8,6 +8,14 @@ export type ModelOption = {
   label: string;
 };
 
+export type ModelCapabilities = {
+  contentEdit: boolean;
+  themeTokenEdit: boolean;
+  imageGenerate: boolean;
+  imageEdit: boolean;
+  visionAssist: boolean;
+};
+
 export type WebmasterDroidConfig = {
   apiBaseUrl?: string;
   supabaseUrl?: string;
@@ -42,6 +50,7 @@ export type WebmasterDroidContextValue = {
   setModelId: (modelId: string) => void;
   showModelPicker: boolean;
   modelOptions: ModelOption[];
+  capabilities: ModelCapabilities;
   includeThinking: boolean;
   setIncludeThinking: (value: boolean) => void;
   refreshKey: number;

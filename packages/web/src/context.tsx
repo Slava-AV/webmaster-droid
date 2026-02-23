@@ -15,12 +15,21 @@ import { fetchModels } from "./api";
 import { resolveWebmasterDroidConfig } from "./config";
 import { getSupabaseBrowserClient } from "./supabase-client";
 import type {
+  ModelCapabilities,
   ModelOption,
   WebmasterDroidConfig,
   WebmasterDroidContextValue,
 } from "./types";
 
 const WebmasterDroidContext = createContext<WebmasterDroidContextValue | null>(null);
+
+const DEFAULT_MODEL_CAPABILITIES: ModelCapabilities = {
+  contentEdit: true,
+  themeTokenEdit: true,
+  imageGenerate: false,
+  imageEdit: false,
+  visionAssist: false,
+};
 
 export function WebmasterDroidProvider(props: {
   children: ReactNode;
@@ -63,6 +72,9 @@ export function WebmasterDroidProvider(props: {
   const [modelId, setModelId] = useState<string | null>(null);
   const [showModelPickerState, setShowModelPickerState] = useState(false);
   const [modelOptions, setModelOptions] = useState<ModelOption[]>([]);
+  const [capabilities, setCapabilities] = useState<ModelCapabilities>(
+    DEFAULT_MODEL_CAPABILITIES
+  );
   const [includeThinking, setIncludeThinking] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedElement, setSelectedElement] = useState<SelectedElementContext | null>(null);
@@ -110,6 +122,7 @@ export function WebmasterDroidProvider(props: {
 
         setShowModelPickerState(models.showModelPicker);
         setModelOptions(options);
+        setCapabilities(models.capabilities ?? DEFAULT_MODEL_CAPABILITIES);
         setModelId((current) => {
           if (current && options.some((option) => option.id === current)) {
             return current;
@@ -122,6 +135,7 @@ export function WebmasterDroidProvider(props: {
         if (!ignore) {
           setShowModelPickerState(false);
           setModelOptions([]);
+          setCapabilities(DEFAULT_MODEL_CAPABILITIES);
           setModelId((current) => current ?? resolvedConfig.defaultModelId);
         }
       });
@@ -145,6 +159,7 @@ export function WebmasterDroidProvider(props: {
       setModelId,
       showModelPicker,
       modelOptions,
+      capabilities,
       includeThinking,
       setIncludeThinking,
       refreshKey,
@@ -161,6 +176,7 @@ export function WebmasterDroidProvider(props: {
       modelId,
       showModelPicker,
       modelOptions,
+      capabilities,
       includeThinking,
       refreshKey,
       authConfigured,

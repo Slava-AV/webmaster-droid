@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webmaster-droid.dev/schemas/cli-scan.schema.json",
+  "title": "CLI scan --json response",
+  "type": "object",
+  "required": ["ok", "command", "version", "timestamp"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "command": { "const": "scan" },
+    "version": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": "object",
+      "required": ["reportPath", "source", "totalFiles", "totalFindings"],
+      "properties": {
+        "reportPath": { "type": "string" },
+        "source": { "type": "string" },
+        "totalFiles": { "type": "integer", "minimum": 0 },
+        "totalFindings": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "ok": { "const": true } } },
+      "then": { "required": ["data"] }
+    },
+    {
+      "if": { "properties": { "ok": { "const": false } } },
+      "then": { "required": ["errors"] }
+    }
+  ],
+  "additionalProperties": false
+}

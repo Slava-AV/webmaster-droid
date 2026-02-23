@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webmaster-droid.dev/schemas/cli-doctor.schema.json",
+  "title": "CLI doctor --json response",
+  "type": "object",
+  "required": ["ok", "command", "version", "timestamp"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "command": { "const": "doctor" },
+    "version": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": "object",
+      "required": ["checksPassed"],
+      "properties": {
+        "checksPassed": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "ok": { "const": true } } },
+      "then": {
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "checksPassed": { "const": true }
+            },
+            "required": ["checksPassed"]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "ok": { "const": false } } },
+      "then": {
+        "required": ["data", "errors"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "checksPassed": { "const": false }
+            },
+            "required": ["checksPassed"]
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

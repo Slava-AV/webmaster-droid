@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webmaster-droid.dev/schemas/chat-stream-events.schema.json",
+  "title": "Chat Stream Events",
+  "description": "SSE event payload contract emitted by POST /api/chat/stream.",
+  "type": "object",
+  "required": ["event", "data"],
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": ["ready", "thinking", "tool", "message", "draft-updated", "ping", "error", "done"]
+    },
+    "data": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["ok"],
+          "properties": {
+            "ok": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": ["note"],
+          "properties": {
+            "note": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": ["tool", "summary"],
+          "properties": {
+            "tool": { "type": "string" },
+            "summary": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": ["text"],
+          "properties": {
+            "text": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["contentVersion", "updatedAt", "summary"],
+          "properties": {
+            "contentVersion": { "type": "string" },
+            "updatedAt": { "type": "string", "format": "date-time" },
+            "summary": {
+              "type": "object",
+              "required": ["contentOperations", "themeTokenChanges", "imageOperations"],
+              "properties": {
+                "contentOperations": { "type": "integer", "minimum": 0 },
+                "themeTokenChanges": { "type": "integer", "minimum": 0 },
+                "imageOperations": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["error"],
+          "properties": {
+            "error": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": ["ts"],
+          "properties": {
+            "ts": { "type": "string", "format": "date-time" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

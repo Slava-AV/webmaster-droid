@@ -6,7 +6,7 @@ import type {
 } from "@webmaster-droid/contracts";
 
 import { buildApiUrl } from "./config";
-import type { AdminAuthToken, ModelOption } from "./types";
+import type { AdminAuthToken, ModelCapabilities, ModelOption } from "./types";
 
 function withAuthHeaders(token: AdminAuthToken): Record<string, string> {
   if (!token) {
@@ -55,6 +55,7 @@ export async function fetchModels(apiBaseUrl: string) {
       openai: boolean;
       gemini: boolean;
     };
+    capabilities: ModelCapabilities;
     defaultModelId: string;
     showModelPicker: boolean;
     availableModels: ModelOption[];

@@ -86,6 +86,14 @@ const DEFAULT_MODEL_OPTIONS: Array<{
   },
 ];
 
+interface ModelCapabilities {
+  contentEdit: boolean;
+  themeTokenEdit: boolean;
+  imageGenerate: boolean;
+  imageEdit: boolean;
+  visionAssist: boolean;
+}
+
 function buildAvailableModels(config: ModelProviderConfig): Array<{ id: string; label: string }> {
   const enabledProviders = new Set<"openai" | "gemini">();
   if (config.openaiEnabled) {
@@ -108,6 +116,23 @@ function buildAvailableModels(config: ModelProviderConfig): Array<{ id: string; 
   }
 
   return Array.from(options.values());
+}
+
+function buildModelCapabilities(input: {
+  config: ModelProviderConfig;
+  availableModels: Array<{ id: string; label: string }>;
+  hasPublicAssetBaseUrl: boolean;
+}): ModelCapabilities {
+  const hasReadableModel = input.availableModels.length > 0;
+  const hasImagePipeline = input.config.geminiEnabled && input.hasPublicAssetBaseUrl;
+
+  return {
+    contentEdit: hasReadableModel,
+    themeTokenEdit: hasReadableModel,
+    imageGenerate: hasImagePipeline,
+    imageEdit: hasImagePipeline,
+    visionAssist: hasReadableModel,
+  };
 }
 
 function resolveDefaultModelId(
@@ -328,11 +353,17 @@ export async function handler(
       const config = service.getModelConfig();
       const availableModels = buildAvailableModels(config);
       const defaultModelId = resolveDefaultModelId(config, availableModels);
+      const capabilities = buildModelCapabilities({
+        config,
+        availableModels,
+        hasPublicAssetBaseUrl: Boolean(service.getPublicAssetBaseUrl()),
+      });
       return jsonResponse(200, {
         providers: {
           openai: config.openaiEnabled,
           gemini: config.geminiEnabled,
         },
+        capabilities,
         defaultModelId,
         showModelPicker: availableModels.length > 1,
         availableModels,
@@ -438,6 +469,11 @@ export async function handler(
           data: {
             contentVersion: result.updatedDraft.meta.contentVersion,
             updatedAt: result.updatedDraft.meta.updatedAt,
+            summary: result.mutationSummary ?? {
+              contentOperations: 0,
+              themeTokenChanges: 0,
+              imageOperations: 0,
+            },
           },
         });
       }
@@ -531,6 +567,11 @@ export const streamHandler = awslambda.streamifyResponse(
         write("draft-updated", {
           contentVersion: result.updatedDraft.meta.contentVersion,
           updatedAt: result.updatedDraft.meta.updatedAt,
+          summary: result.mutationSummary ?? {
+            contentOperations: 0,
+            themeTokenChanges: 0,
+            imageOperations: 0,
+          },
         });
       }
       write("done", { ok: true });

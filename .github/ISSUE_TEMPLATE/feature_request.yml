@@ -4,26 +4,33 @@ title: "[Feature]: "
 labels: ["enhancement"]
 body:
   - type: textarea
-    id: problem
+    id: user_problem
     attributes:
-      label: Problem statement
-      description: What user/developer problem are you solving?
+      label: User problem (non-technical perspective)
+      description: What is hard for non-technical editors today?
     validations:
       required: true
   - type: textarea
-    id: proposal
+    id: proposed_behavior
     attributes:
-      label: Proposed solution
-      description: Describe expected behavior and API shape.
+      label: Proposed behavior
+      description: Describe expected user-visible behavior and API/UI changes.
     validations:
       required: true
+  - type: textarea
+    id: success_criteria
+    attributes:
+      label: Success criteria
+      description: How should we validate this works end-to-end?
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Relevant package(s)
+      placeholder: "@webmaster-droid/web, @webmaster-droid/server"
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives considered
       description: Any workarounds or other approaches?
-  - type: input
-    id: package
-    attributes:
-      label: Relevant package(s)
-      placeholder: "@webmaster-droid/cli, @webmaster-droid/react"

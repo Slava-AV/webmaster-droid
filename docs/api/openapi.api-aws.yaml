@@ -1,0 +1,272 @@
+openapi: 3.1.0
+info:
+  title: Webmaster Droid AWS API
+  version: 0.1.0
+  description: |
+    HTTP and SSE contract for the `@webmaster-droid/server` AWS API handler.
+servers:
+  - url: https://example.com
+paths:
+  /api/content:
+    get:
+      summary: Fetch CMS content
+      parameters:
+        - in: query
+          name: stage
+          schema:
+            type: string
+            enum: [live, draft]
+            default: live
+      responses:
+        '200':
+          description: Content payload
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [stage, content]
+                properties:
+                  stage:
+                    type: string
+                    enum: [live, draft]
+                  content:
+                    type: object
+  /api/models:
+    get:
+      summary: Fetch model and capability configuration
+      responses:
+        '200':
+          description: Model options and capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsResponse'
+  /api/session:
+    get:
+      summary: Validate admin session
+      responses:
+        '200':
+          description: Session state
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authenticated]
+                properties:
+                  authenticated:
+                    type: boolean
+                  identity:
+                    type: object
+  /api/history:
+    get:
+      summary: Fetch rollback history
+      responses:
+        '200':
+          description: Checkpoints and published versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [checkpoints, published]
+                properties:
+                  checkpoints:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, createdAt, reason]
+                      properties:
+                        id:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        reason:
+                          type: string
+                  published:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, createdAt]
+                      properties:
+                        id:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+  /api/publish:
+    post:
+      summary: Publish draft to live
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmationText]
+              properties:
+                confirmationText:
+                  type: string
+      responses:
+        '200':
+          description: Publish success
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, version]
+                properties:
+                  ok:
+                    type: boolean
+                  version:
+                    type: object
+  /api/rollback:
+    post:
+      summary: Restore draft from checkpoint or published snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceType, sourceId]
+              properties:
+                sourceType:
+                  type: string
+                  enum: [checkpoint, published]
+                sourceId:
+                  type: string
+      responses:
+        '200':
+          description: Rollback success
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, draftVersion]
+                properties:
+                  ok:
+                    type: boolean
+                  draftVersion:
+                    type: string
+  /api/checkpoints/delete:
+    post:
+      summary: Delete a checkpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checkpointId]
+              properties:
+                checkpointId:
+                  type: string
+      responses:
+        '200':
+          description: Delete success
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, checkpointId]
+                properties:
+                  ok:
+                    type: boolean
+                  checkpointId:
+                    type: string
+  /api/chat/stream:
+    post:
+      summary: Run chat turn and stream events
+      description: Server-sent event stream. See `docs/api/chat-stream-events.schema.json` for event payloads.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                modelId:
+                  type: string
+                includeThinking:
+                  type: boolean
+                currentPath:
+                  type: string
+                selectedElement:
+                  type: object
+                history:
+                  type: array
+                  items:
+                    type: object
+                    required: [role, text]
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      text:
+                        type: string
+      responses:
+        '200':
+          description: text/event-stream payload
+          content:
+            text/event-stream:
+              schema:
+                type: string
+components:
+  schemas:
+    ModelOption:
+      type: object
+      required: [id, label]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+    ModelCapabilities:
+      type: object
+      required:
+        - contentEdit
+        - themeTokenEdit
+        - imageGenerate
+        - imageEdit
+        - visionAssist
+      properties:
+        contentEdit:
+          type: boolean
+        themeTokenEdit:
+          type: boolean
+        imageGenerate:
+          type: boolean
+        imageEdit:
+          type: boolean
+        visionAssist:
+          type: boolean
+    ModelsResponse:
+      type: object
+      required:
+        - providers
+        - capabilities
+        - defaultModelId
+        - showModelPicker
+        - availableModels
+      properties:
+        providers:
+          type: object
+          required: [openai, gemini]
+          properties:
+            openai:
+              type: boolean
+            gemini:
+              type: boolean
+        capabilities:
+          $ref: '#/components/schemas/ModelCapabilities'
+        defaultModelId:
+          type: string
+        showModelPicker:
+          type: boolean
+        availableModels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelOption'
