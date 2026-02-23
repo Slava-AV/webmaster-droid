@@ -35,3 +35,25 @@ npm run typecheck
 ## Release Notes
 
 Update `CHANGELOG.md` for user-facing changes.
+
+## Release Workflow
+
+Package publishing is automated with Changesets and GitHub Actions.
+
+1. For any PR that changes files under `packages/**`, add a changeset file:
+
+```bash
+npm run changeset
+```
+
+2. Commit the generated `.changeset/*.md` file with your feature/fix.
+3. After merge to `main`, the release workflow creates/updates a release PR.
+4. Merging the release PR publishes changed packages to npm and syncs `alpha` dist-tags.
+
+### Publish Failure Recovery
+
+If a publish job partially fails:
+
+1. Fix the root cause in a normal PR.
+2. Add a follow-up changeset for the affected package(s).
+3. Merge to `main` to generate a new release PR, or rerun `Release Packages` via `workflow_dispatch` after confirming no conflicting in-flight release.

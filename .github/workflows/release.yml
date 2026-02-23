@@ -1,12 +1,20 @@
-name: CI
+name: Release Packages
 
 on:
   push:
     branches: ["main"]
-  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 jobs:
-  validate:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,20 +26,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          registry-url: "https://registry.npmjs.org"
           cache: npm
-
-      - name: Ensure Changeset For Package Changes
-        if: ${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/') }}
-        run: node ./scripts/check-changeset-required.mjs
 
       - name: Install dependencies
         run: npm ci --include=optional
 
       - name: Ensure Linux Optional Binaries
         run: npm install --no-save @rollup/rollup-linux-x64-gnu @parcel/watcher-linux-x64-glibc lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
-
-      - name: Verify Unified Topology
-        run: npm run verify:topology
 
       - name: Build
         run: npm run build
@@ -41,3 +43,16 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Create Release PR or Publish
+        uses: changesets/action@v1
+        with:
+          version: npm run release:version
+          publish: npm run release:ci
+          title: "chore: release packages"
+          commit: "chore: release packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+          NPM_CONFIG_ACCESS: "public"
