@@ -1,4 +1,11 @@
-import { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } from "jose";
+import {
+  createRemoteJWKSet,
+  decodeProtectedHeader,
+  jwtVerify,
+  type JWTPayload,
+} from "jose";
+
+import { readFirstTrimmedEnv, readTrimmedEnv } from "../runtime-env";
 
 export interface AdminIdentity {
   sub: string;
@@ -7,59 +14,117 @@ export interface AdminIdentity {
 }
 
 let jwksCache: ReturnType<typeof createRemoteJWKSet> | null = null;
+let jwksCacheUrl: string | null = null;
+const SUPABASE_JWKS_PATH = "/auth/v1/.well-known/jwks.json";
 
-function getJwks() {
-  const jwksUrl = process.env.SUPABASE_JWKS_URL;
-  if (!jwksUrl) {
-    throw new Error("SUPABASE_JWKS_URL is not configured");
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function normalizeSupabaseBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function resolveSupabaseBaseUrl(): string {
+  const value = readFirstTrimmedEnv(["CMS_SUPABASE_URL", "SUPABASE_URL"]);
+  if (!value) {
+    throw new Error("SUPABASE_URL is not configured. Set SUPABASE_URL or CMS_SUPABASE_URL.");
   }
 
-  if (!jwksCache) {
+  return normalizeSupabaseBaseUrl(value);
+}
+
+function resolveSupabaseJwksUrl(): string {
+  const explicit = readTrimmedEnv("CMS_SUPABASE_JWKS_URL");
+  if (explicit) {
+    return explicit;
+  }
+
+  return `${resolveSupabaseBaseUrl()}${SUPABASE_JWKS_PATH}`;
+}
+
+function toAdminIdentity(payload: JWTPayload): AdminIdentity {
+  const identity: AdminIdentity = {
+    sub: String(payload.sub ?? ""),
+    email: typeof payload.email === "string" ? payload.email : undefined,
+    role:
+      typeof payload.role === "string"
+        ? payload.role
+        : typeof payload.user_role === "string"
+          ? payload.user_role
+          : undefined,
+  };
+
+  if (!identity.sub) {
+    throw new Error("Invalid token: subject is missing.");
+  }
+
+  return identity;
+}
+
+function enforceAdminEmail(identity: AdminIdentity): AdminIdentity {
+  const enforcedAdminEmail = readTrimmedEnv("ADMIN_EMAIL");
+  if (
+    enforcedAdminEmail &&
+    identity.email?.toLowerCase() !== enforcedAdminEmail.toLowerCase()
+  ) {
+    throw new Error("Authenticated user is not allowed for admin access.");
+  }
+
+  return identity;
+}
+
+function getJwks() {
+  const jwksUrl = resolveSupabaseJwksUrl();
+  if (!jwksCache || jwksCacheUrl !== jwksUrl) {
     jwksCache = createRemoteJWKSet(new URL(jwksUrl));
+    jwksCacheUrl = jwksUrl;
   }
 
   return jwksCache;
 }
 
 function buildSupabaseUserEndpoint(): string {
-  const explicitBaseUrl = process.env.SUPABASE_URL?.trim();
-  if (explicitBaseUrl) {
-    return `${explicitBaseUrl.replace(/\/$/, "")}/auth/v1/user`;
-  }
-
-  const jwksUrl = process.env.SUPABASE_JWKS_URL?.trim();
-  if (!jwksUrl) {
-    throw new Error("SUPABASE_JWKS_URL is not configured");
-  }
-
-  const parsed = new URL(jwksUrl);
-  return `${parsed.origin}/auth/v1/user`;
+  return `${resolveSupabaseBaseUrl()}/auth/v1/user`;
 }
 
-function getSupabaseAnonKey(): string {
+function getSupabaseAuthKey(): string {
   const key =
-    process.env.SUPABASE_ANON_KEY?.trim() ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+    readTrimmedEnv("CMS_SUPABASE_AUTH_KEY") ??
+    readTrimmedEnv("SUPABASE_ANON_KEY") ??
+    readTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!key) {
-    throw new Error("SUPABASE_ANON_KEY is required for HS256 token verification fallback.");
+    throw new Error(
+      "Supabase auth fallback requires CMS_SUPABASE_AUTH_KEY, SUPABASE_ANON_KEY, or SUPABASE_SERVICE_ROLE_KEY."
+    );
   }
 
   return key;
 }
 
-async function verifyHs256ViaSupabase(token: string): Promise<AdminIdentity> {
+async function verifyViaSupabaseUser(
+  token: string,
+  previousError?: unknown
+): Promise<AdminIdentity> {
   const response = await fetch(buildSupabaseUserEndpoint(), {
     method: "GET",
     headers: {
       authorization: `Bearer ${token}`,
-      apikey: getSupabaseAnonKey(),
+      apikey: getSupabaseAuthKey(),
     },
   });
 
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Supabase token verification failed: ${response.status} ${detail}`);
+    const detail = (await response.text()).trim();
+    const suffix = detail ? ` ${detail}` : "";
+    if (previousError) {
+      throw new Error(
+        `Token verification failed with JWKS/local checks (${errorMessage(previousError)}) and /auth/v1/user (${response.status}${suffix}).`
+      );
+    }
+
+    throw new Error(`Supabase token verification failed: ${response.status}${suffix}`);
   }
 
   const user = (await response.json()) as {
@@ -95,79 +160,44 @@ export function getBearerToken(headers: Record<string, string | undefined>): str
 }
 
 export async function verifyAdminToken(token: string): Promise<AdminIdentity> {
-  const header = decodeProtectedHeader(token);
-  const algorithm = typeof header.alg === "string" ? header.alg : "";
+  let algorithm = "";
+  try {
+    const header = decodeProtectedHeader(token);
+    algorithm = typeof header.alg === "string" ? header.alg : "";
+  } catch {
+    return enforceAdminEmail(await verifyViaSupabaseUser(token));
+  }
 
   if (algorithm === "HS256") {
-    const secret = process.env.SUPABASE_JWT_SECRET?.trim();
+    const secret = readTrimmedEnv("CMS_SUPABASE_JWT_SECRET");
     if (secret) {
-      const result = await jwtVerify(token, new TextEncoder().encode(secret), {
-        algorithms: ["HS256"],
+      try {
+        const result = await jwtVerify(token, new TextEncoder().encode(secret), {
+          algorithms: ["HS256"],
+        });
+
+        return enforceAdminEmail(toAdminIdentity(result.payload));
+      } catch (localHs256Error) {
+        return enforceAdminEmail(
+          await verifyViaSupabaseUser(token, localHs256Error)
+        );
+      }
+    }
+
+    return enforceAdminEmail(await verifyViaSupabaseUser(token));
+  }
+
+  if (algorithm === "RS256" || algorithm === "ES256") {
+    try {
+      const result = await jwtVerify(token, getJwks(), {
+        algorithms: ["RS256", "ES256"],
       });
 
-      const payload = result.payload;
-      const identity: AdminIdentity = {
-        sub: String(payload.sub ?? ""),
-        email: typeof payload.email === "string" ? payload.email : undefined,
-        role:
-          typeof payload.role === "string"
-            ? payload.role
-            : typeof payload.user_role === "string"
-              ? payload.user_role
-              : undefined,
-      };
-
-      if (!identity.sub) {
-        throw new Error("Invalid token: subject is missing.");
-      }
-
-      const enforcedAdminEmail = process.env.ADMIN_EMAIL;
-      if (
-        enforcedAdminEmail &&
-        identity.email?.toLowerCase() !== enforcedAdminEmail.toLowerCase()
-      ) {
-        throw new Error("Authenticated user is not allowed for admin access.");
-      }
-
-      return identity;
+      return enforceAdminEmail(toAdminIdentity(result.payload));
+    } catch (jwksError) {
+      return enforceAdminEmail(await verifyViaSupabaseUser(token, jwksError));
     }
-
-    const identity = await verifyHs256ViaSupabase(token);
-    const enforcedAdminEmail = process.env.ADMIN_EMAIL;
-    if (
-      enforcedAdminEmail &&
-      identity.email?.toLowerCase() !== enforcedAdminEmail.toLowerCase()
-    ) {
-      throw new Error("Authenticated user is not allowed for admin access.");
-    }
-
-    return identity;
   }
 
-  const result = await jwtVerify(token, getJwks(), {
-    algorithms: ["RS256", "ES256"],
-  });
-
-  const payload = result.payload;
-  const identity: AdminIdentity = {
-    sub: String(payload.sub ?? ""),
-    email: typeof payload.email === "string" ? payload.email : undefined,
-    role:
-      typeof payload.role === "string"
-        ? payload.role
-        : typeof payload.user_role === "string"
-          ? payload.user_role
-          : undefined,
-  };
-
-  if (!identity.sub) {
-    throw new Error("Invalid token: subject is missing.");
-  }
-
-  const enforcedAdminEmail = process.env.ADMIN_EMAIL;
-  if (enforcedAdminEmail && identity.email?.toLowerCase() !== enforcedAdminEmail.toLowerCase()) {
-    throw new Error("Authenticated user is not allowed for admin access.");
-  }
-
-  return identity;
+  return enforceAdminEmail(await verifyViaSupabaseUser(token));
 }

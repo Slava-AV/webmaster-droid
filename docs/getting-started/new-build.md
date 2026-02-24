@@ -57,16 +57,26 @@ export function HeroTitle() {
 }
 ```
 
+If runtime data may be partial, use `normalizeCmsDocumentWithFallback` from `@webmaster-droid/web` with a schema-shaped fallback document.
+
 ## 5. Configure backend environment
 
 Set required backend environment values including:
 
 - `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_JWKS_URL`
+- `CMS_SUPABASE_URL` (optional override for runtime URL source)
+- `CMS_SUPABASE_JWKS_URL` (optional override; default derives from `SUPABASE_URL`)
+- `CMS_SUPABASE_AUTH_KEY` (optional auth fallback key for `/auth/v1/user`)
 - `CMS_SUPABASE_BUCKET` (optional, default `webmaster-droid-cms`)
 - `CMS_PUBLIC_BASE_URL` (required for generated image URLs)
 - auth/model provider variables
+
+Supabase hardening details:
+
+- [`new-build-supabase.md`](./new-build-supabase.md)
+- [`../guides/supabase-production-checklist.md`](../guides/supabase-production-checklist.md)
 
 Use AWS instead:
 

@@ -15,6 +15,7 @@ import {
   type CmsDocument,
 } from "@webmaster-droid/contracts";
 import { EditableProvider } from "./editables";
+import { normalizeCmsDocumentWithFallback } from "./normalize-document";
 
 import { fetchCmsContent } from "./api";
 import { WebmasterDroidProvider, useWebmasterDroid } from "./context";
@@ -96,7 +97,10 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
 
         setState({
           requestKey,
-          document: content as TDocument,
+          document: normalizeCmsDocumentWithFallback<TDocument>(
+            content,
+            defaultDocument
+          ),
           error: null,
         });
       })

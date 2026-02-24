@@ -29,7 +29,11 @@ test("init creates env template and does not create webmaster-droid.config.ts", 
 
     assert.equal(existsSync(envPath), true);
     assert.equal(existsSync(configPath), false);
-    assert.match(readFileSync(envPath, "utf8"), /NEXT_PUBLIC_AGENT_API_BASE_URL=/);
+    const envTemplate = readFileSync(envPath, "utf8");
+    assert.match(envTemplate, /NEXT_PUBLIC_AGENT_API_BASE_URL=/);
+    assert.match(envTemplate, /CMS_SUPABASE_JWKS_URL=/);
+    assert.match(envTemplate, /CMS_SUPABASE_AUTH_KEY=/);
+    assert.doesNotMatch(envTemplate, /(^|\n)SUPABASE_JWKS_URL=/);
     assert.match(output, /Backend preset: aws/);
   } finally {
     rmSync(outDir, { recursive: true, force: true });

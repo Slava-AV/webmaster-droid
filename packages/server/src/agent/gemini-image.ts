@@ -1,3 +1,5 @@
+import { readTrimmedEnv } from "../runtime-env";
+
 const DEFAULT_GEMINI_IMAGE_MODEL_ID = "gemini-3-pro-image-preview";
 const DEFAULT_GEMINI_IMAGE_REQUEST_TIMEOUT_MS = 285_000;
 const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -14,7 +16,7 @@ export interface GeminiInlineImagePayload {
 }
 
 function geminiImageRequestTimeoutMs(): number {
-  const raw = process.env.GEMINI_IMAGE_REQUEST_TIMEOUT_MS;
+  const raw = readTrimmedEnv("GEMINI_IMAGE_REQUEST_TIMEOUT_MS");
   if (!raw) {
     return DEFAULT_GEMINI_IMAGE_REQUEST_TIMEOUT_MS;
   }
@@ -202,12 +204,12 @@ export async function generateGeminiImage(input: {
   quality: GenerateImageQuality;
   referenceImage?: GeminiInlineImagePayload;
 }): Promise<{ bytes: Uint8Array; mimeType: string }> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
+  const apiKey = readTrimmedEnv("GOOGLE_GENERATIVE_AI_API_KEY");
   if (!apiKey) {
     throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is not configured.");
   }
 
-  const modelId = process.env.GEMINI_IMAGE_MODEL_ID?.trim() || DEFAULT_GEMINI_IMAGE_MODEL_ID;
+  const modelId = readTrimmedEnv("GEMINI_IMAGE_MODEL_ID") || DEFAULT_GEMINI_IMAGE_MODEL_ID;
   const endpoint = `${GEMINI_API_BASE_URL}/${encodeURIComponent(modelId)}:generateContent`;
   const timeoutMs = geminiImageRequestTimeoutMs();
 
