@@ -36,7 +36,8 @@
     "build": "npm run build:js && npm run build:assets",
     "build:js": "tsup src/index.tsx --format esm --dts --clean",
     "build:assets": "node ./scripts/copy-css.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node ../../scripts/run-workspace-tests.mjs"
   },
   "devDependencies": {
     "@types/sanitize-html": "^2.16.0"
