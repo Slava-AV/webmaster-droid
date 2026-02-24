@@ -1,5 +1,3 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-
 import type {
   ModelProviderConfig,
   PublishRequest,
@@ -13,6 +11,7 @@ import { getBearerToken, verifyAdminToken } from "./auth";
 import { jsonResponse, normalizePath, parseJsonBody, sseResponse } from "./http";
 import { normalizeEditablePath } from "./normalize-editable-path";
 import { getCmsService } from "./service-factory";
+import type { ApiGatewayProxyEvent, ApiGatewayProxyResult } from "./types";
 
 declare const awslambda: {
   streamifyResponse: (
@@ -35,6 +34,7 @@ declare const awslambda: {
     };
   };
 };
+type AwsStreamHandler = (event: unknown, responseStream: unknown, context: unknown) => Promise<void>;
 
 interface ChatRequestBody {
   message: string;
@@ -218,11 +218,11 @@ async function requireAdminFromHeaders(headers: Record<string, string | undefine
   return verifyAdminToken(token);
 }
 
-async function requireAdmin(event: APIGatewayProxyEvent) {
+async function requireAdmin(event: ApiGatewayProxyEvent) {
   return requireAdminFromHeaders(toHeaderRecord(event.headers));
 }
 
-function getStageFromQuery(query: APIGatewayProxyEvent["queryStringParameters"]) {
+function getStageFromQuery(query: ApiGatewayProxyEvent["queryStringParameters"]) {
   const stage = query?.stage;
   if (stage === "draft") {
     return "draft";
@@ -329,8 +329,8 @@ function normalizeSelectedElementContext(
 }
 
 export async function handler(
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> {
+  event: ApiGatewayProxyEvent
+): Promise<ApiGatewayProxyResult> {
   try {
     if (event.httpMethod === "OPTIONS") {
       return jsonResponse(200, { ok: true });
@@ -501,9 +501,24 @@ export async function handler(
   }
 }
 
-export const streamHandler = awslambda.streamifyResponse(
-  async (event: unknown, responseStream: unknown) => {
-    const stream = awslambda.HttpResponseStream.from(responseStream, {
+function createStreamHandler(): AwsStreamHandler {
+  if (
+    typeof awslambda === "undefined" ||
+    typeof awslambda.streamifyResponse !== "function" ||
+    typeof awslambda.HttpResponseStream?.from !== "function"
+  ) {
+    return async () => {
+      throw new Error(
+        "AWS Lambda stream handler requires the awslambda runtime global. " +
+          "Use the non-streaming `handler` outside AWS Lambda."
+      );
+    };
+  }
+
+  const runtime = awslambda;
+
+  return runtime.streamifyResponse(async (event: unknown, responseStream: unknown) => {
+    const stream = runtime.HttpResponseStream.from(responseStream, {
       statusCode: 200,
       headers: SSE_HEADERS,
     });
@@ -587,5 +602,19 @@ export const streamHandler = awslambda.streamifyResponse(
       }
       stream.end();
     }
+  });
+}
+
+let cachedStreamHandler: AwsStreamHandler | null = null;
+
+export const streamHandler: AwsStreamHandler = async (
+  event: unknown,
+  responseStream: unknown,
+  context: unknown
+) => {
+  if (!cachedStreamHandler) {
+    cachedStreamHandler = createStreamHandler();
   }
-);
+
+  return cachedStreamHandler(event, responseStream, context);
+};

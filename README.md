@@ -82,6 +82,13 @@ Read: [`docs/migration/optional-skill.md`](docs/migration/optional-skill.md)
 - `@webmaster-droid/server`: backend service, AI agent, storage adapters, and API adapters for Supabase/AWS.
 - `@webmaster-droid/cli`: initialization, schema, scan/codemod, doctor, deploy, and skill install tools.
 
+## Server import paths
+
+- Supabase route handler (works in standard Node/Edge runtimes):
+  - `import { supabaseHandler } from "@webmaster-droid/server";`
+- AWS handlers:
+  - `import { handler, streamHandler } from "@webmaster-droid/server/api-aws";`
+
 ## Security
 
 Report vulnerabilities via [`SECURITY.md`](SECURITY.md).
