@@ -1,5 +1,12 @@
 # @webmaster-droid/cli
 
+## Unreleased
+
+### Changed
+
+- `webmaster-droid init` no longer generates `webmaster-droid.config.ts`.
+- `webmaster-droid init` now only initializes `.env.webmaster-droid.example` and reports backend preset.
+
 ## 0.1.0
 
 ### Patch Changes
