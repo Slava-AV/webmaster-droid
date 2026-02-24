@@ -30,3 +30,8 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Enforced unified package topology with CI verification (`contracts`, `web`, `server`, `cli`) and removed legacy package references from public docs/workflows.
 - Hardened `EditableRichText` against stored XSS by sanitizing CMS HTML before rendering.
 - Decomposed admin overlay implementation into dedicated controller, UI components, domain types, and utility modules.
+- Breaking integration update: `@webmaster-droid/web/styles.css` is removed in favor of scoped core/theme styling:
+  - core layout styles auto-inject by default
+  - optional skin in `@webmaster-droid/web/theme.css`
+  - strict CSP path via `@webmaster-droid/web/core.css` plus `injectCoreStyles={false}`
+- `@webmaster-droid/cli init` no longer writes `webmaster-droid.config.ts`; it now initializes only the env template.

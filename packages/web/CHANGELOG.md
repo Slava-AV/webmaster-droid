@@ -1,5 +1,20 @@
 # @webmaster-droid/web
 
+## Unreleased
+
+### Breaking Changes
+
+- Removed `@webmaster-droid/web/styles.css`.
+- Overlay styles are now split into:
+  - auto-injected core layout styles (default runtime behavior)
+  - optional `@webmaster-droid/web/theme.css` skin
+  - manual `@webmaster-droid/web/core.css` for strict CSP (`injectCoreStyles={false}`)
+
+### Added
+
+- Added `injectCoreStyles?: boolean` to `WebmasterDroidRuntime` and `WebmasterDroidOverlay`.
+- Added new CSS entrypoints: `@webmaster-droid/web/core.css` and `@webmaster-droid/web/theme.css`.
+
 ## 0.1.1
 
 ### Patch Changes
