@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import type { SelectedElementContext } from "@webmaster-droid/contracts";
+import { joinClassNames, overlayClass } from "./class-names";
 import { kindIcon, OVERLAY_FONT_FAMILY, formatHistoryTime } from "./utils";
 import type {
   ChatMessage,
@@ -36,46 +37,52 @@ export function OverlayHeader({
   onClose,
 }: OverlayHeaderProps) {
   return (
-    <header className="border-b border-stone-300 bg-[#f3eee5] p-2">
-      <div className="flex items-center gap-2">
+    <header className={overlayClass("header", "border-b border-stone-300 bg-[#f3eee5] p-2")}>
+      <div className={overlayClass("headerRow", "flex items-center gap-2")}>
         {isAuthenticated ? (
           <>
             <span
-              className={`rounded border px-1.5 py-0.5 text-[10px] font-medium leading-4 ${
+              className={joinClassNames(
+                overlayClass("publishState", "rounded border px-1.5 py-0.5 text-[10px] font-medium leading-4"),
                 publishState === "Published"
-                  ? "border-stone-300 bg-[#ece5d9] text-stone-600"
-                  : "border-stone-500 bg-[#ded4c3] text-stone-800"
-              }`}
+                  ? overlayClass("publishStatePublished", "border-stone-300 bg-[#ece5d9] text-stone-600")
+                  : overlayClass("publishStateUnpublished", "border-stone-500 bg-[#ded4c3] text-stone-800")
+              )}
             >
               {publishState}
             </span>
             <button
               type="button"
-              className="rounded border border-stone-700 bg-stone-800 px-2 py-1 text-[11px] font-semibold leading-4 text-stone-100 hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className={overlayClass(
+                "publishButton",
+                "rounded border border-stone-700 bg-stone-800 px-2 py-1 text-[11px] font-semibold leading-4 text-stone-100 hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              )}
               onClick={onPublish}
               disabled={!isAuthenticated}
             >
               Publish
             </button>
-            <div className="inline-flex rounded-md border border-stone-300 bg-[#e8dfd1] p-0.5">
+            <div className={overlayClass("tabs", "inline-flex rounded-md border border-stone-300 bg-[#e8dfd1] p-0.5")}>
               <button
                 type="button"
-                className={`rounded px-2 py-1 text-[11px] font-medium leading-4 ${
+                className={joinClassNames(
+                  overlayClass("tabButton", "rounded px-2 py-1 text-[11px] font-medium leading-4"),
                   activeTab === "chat"
-                    ? "bg-[#f7f2e8] text-stone-900 shadow-sm"
+                    ? overlayClass("tabButtonActive", "bg-[#f7f2e8] text-stone-900 shadow-sm")
                     : "text-stone-600 hover:text-stone-900"
-                }`}
+                )}
                 onClick={() => onTabChange("chat")}
               >
                 Chat
               </button>
               <button
                 type="button"
-                className={`rounded px-2 py-1 text-[11px] font-medium leading-4 ${
+                className={joinClassNames(
+                  overlayClass("tabButton", "rounded px-2 py-1 text-[11px] font-medium leading-4"),
                   activeTab === "history"
-                    ? "bg-[#f7f2e8] text-stone-900 shadow-sm"
+                    ? overlayClass("tabButtonActive", "bg-[#f7f2e8] text-stone-900 shadow-sm")
                     : "text-stone-600 hover:text-stone-900"
-                }`}
+                )}
                 onClick={() => onTabChange("history")}
               >
                 History ({historyCount})
@@ -83,19 +90,27 @@ export function OverlayHeader({
             </div>
           </>
         ) : (
-          <h2 className="text-[12px] font-semibold text-stone-700">Login</h2>
+          <h2 className={overlayClass("loginTitle", "text-[12px] font-semibold text-stone-700")}>Login</h2>
         )}
-        <div className="ml-auto flex items-center gap-1">
+        <div className={overlayClass("headerActions", "ml-auto flex items-center gap-1")}>
           {isAuthenticated ? (
             <button
               type="button"
               aria-label="Clear chat"
               title="Clear chat"
               disabled={clearChatDisabled}
-              className="inline-flex h-6 w-6 items-center justify-center rounded border border-stone-300 text-stone-600 hover:bg-[#efe8dc] hover:text-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className={overlayClass(
+                "iconButton",
+                "inline-flex h-6 w-6 items-center justify-center rounded border border-stone-300 text-stone-600 hover:bg-[#efe8dc] hover:text-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+              )}
               onClick={onClearChat}
             >
-              <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                className={overlayClass("icon", "h-3.5 w-3.5")}
+                aria-hidden="true"
+              >
                 <path
                   d="M4.5 5.5H15.5M8 3.75H12M7 7.5V13.5M10 7.5V13.5M13 7.5V13.5M6.5 5.5L7 15C7.03 15.6 7.53 16.08 8.13 16.08H11.87C12.47 16.08 12.97 15.6 13 15L13.5 5.5"
                   stroke="currentColor"
@@ -108,7 +123,10 @@ export function OverlayHeader({
           ) : null}
           <button
             type="button"
-            className="rounded border border-stone-300 px-2 py-1 text-[11px] leading-4 text-stone-700 hover:bg-[#efe8dc]"
+            className={overlayClass(
+              "closeButton",
+              "rounded border border-stone-300 px-2 py-1 text-[11px] leading-4 text-stone-700 hover:bg-[#efe8dc]"
+            )}
             onClick={onClose}
           >
             Close
@@ -139,34 +157,55 @@ export function OverlayLoginPanel({
   onSignIn,
 }: OverlayLoginPanelProps) {
   return (
-    <section className="flex min-h-0 flex-1 items-center justify-center bg-[#ece7dd] p-3">
+    <section
+      className={overlayClass(
+        "loginSection",
+        "flex min-h-0 flex-1 items-center justify-center bg-[#ece7dd] p-3"
+      )}
+    >
       {!authConfigured ? (
-        <div className="w-full max-w-sm rounded border border-red-300 bg-[#f8f3e9] p-3 text-[11px] leading-4 text-red-700">
+        <div
+          className={overlayClass(
+            "loginWarning",
+            "w-full max-w-sm rounded border border-red-300 bg-[#f8f3e9] p-3 text-[11px] leading-4 text-red-700"
+          )}
+        >
           Missing Supabase config (`supabaseUrl` / `supabaseAnonKey`).
         </div>
       ) : (
-        <div className="w-full max-w-sm rounded border border-stone-300 bg-[#f8f3e9] p-3">
-          <h3 className="mb-2 text-[12px] font-semibold text-stone-700">Sign in</h3>
-          <div className="space-y-2">
+        <div className={overlayClass("loginCard", "w-full max-w-sm rounded border border-stone-300 bg-[#f8f3e9] p-3")}>
+          <h3 className={overlayClass("loginHeading", "mb-2 text-[12px] font-semibold text-stone-700")}>
+            Sign in
+          </h3>
+          <div className={overlayClass("loginFields", "space-y-2")}>
             <input
               type="text"
               value={email}
               onChange={(event) => onEmailChange(event.target.value)}
               placeholder="login"
-              className="w-full rounded border border-stone-300 bg-[#f4efe6] px-2 py-1.5 text-[12px] text-stone-900 outline-none focus:border-stone-500"
+              className={overlayClass(
+                "fieldInput",
+                "w-full rounded border border-stone-300 bg-[#f4efe6] px-2 py-1.5 text-[12px] text-stone-900 outline-none focus:border-stone-500"
+              )}
             />
             <input
               type="password"
               value={password}
               onChange={(event) => onPasswordChange(event.target.value)}
               placeholder="Password"
-              className="w-full rounded border border-stone-300 bg-[#f4efe6] px-2 py-1.5 text-[12px] text-stone-900 outline-none focus:border-stone-500"
+              className={overlayClass(
+                "fieldInput",
+                "w-full rounded border border-stone-300 bg-[#f4efe6] px-2 py-1.5 text-[12px] text-stone-900 outline-none focus:border-stone-500"
+              )}
             />
             <button
               type="button"
               onClick={onSignIn}
               disabled={signingIn || !email.trim() || !password}
-              className="w-full rounded border border-stone-700 bg-stone-800 px-2 py-1.5 text-[12px] font-medium text-stone-100 hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className={overlayClass(
+                "primaryButton",
+                "w-full rounded border border-stone-700 bg-stone-800 px-2 py-1.5 text-[12px] font-medium text-stone-100 hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              )}
             >
               {signingIn ? "Signing in" : "Sign in"}
             </button>
@@ -220,7 +259,7 @@ export function OverlayChatPanel({
 }: OverlayChatPanelProps) {
   return (
     <>
-      <section className="flex-1 space-y-1 overflow-auto bg-[#ece7dd] p-2">
+      <section className={overlayClass("chatSection", "flex-1 space-y-1 overflow-auto bg-[#ece7dd] p-2")}>
         {messages.map((entry) => {
           const isAssistant = entry.role === "assistant";
           const isPendingAssistant = isAssistant && entry.status === "pending";
@@ -228,19 +267,30 @@ export function OverlayChatPanel({
           return (
             <div
               key={entry.id}
-              className={
+              className={joinClassNames(
+                overlayClass("message"),
                 entry.role === "tool"
-                  ? "max-w-[96%] px-0.5 py-0 text-[10px] leading-tight text-stone-500"
-                  : `max-w-[92%] rounded-md py-1.5 text-[12px] leading-4 ${
-                      entry.role === "user"
-                        ? "ml-auto bg-[#2e2b27] px-2 text-stone-50"
-                        : entry.role === "thinking"
-                          ? "bg-[#e3dbce] px-2 text-stone-700"
-                          : isAssistant
-                            ? "relative border border-[#d6ccbb] bg-[#f8f3e9] pl-8 pr-2 text-stone-800"
-                            : "bg-[#ddd2bf] px-2 text-stone-800"
-                    }`
-              }
+                  ? overlayClass("messageTool", "max-w-[96%] px-0.5 py-0 text-[10px] leading-tight text-stone-500")
+                  : entry.role === "user"
+                    ? overlayClass(
+                        "messageUser",
+                        "ml-auto max-w-[92%] rounded-md bg-[#2e2b27] px-2 py-1.5 text-[12px] leading-4 text-stone-50"
+                      )
+                    : entry.role === "thinking"
+                      ? overlayClass(
+                          "messageThinking",
+                          "max-w-[92%] rounded-md bg-[#e3dbce] px-2 py-1.5 text-[12px] leading-4 text-stone-700"
+                        )
+                      : isAssistant
+                        ? overlayClass(
+                            "messageAssistant",
+                            "relative max-w-[92%] rounded-md border border-[#d6ccbb] bg-[#f8f3e9] pl-8 pr-2 py-1.5 text-[12px] leading-4 text-stone-800"
+                          )
+                        : overlayClass(
+                            "messageFallback",
+                            "max-w-[92%] rounded-md bg-[#ddd2bf] px-2 py-1.5 text-[12px] leading-4 text-stone-800"
+                          )
+              )}
             >
               {entry.role === "tool" ? (
                 <span>{entry.text}</span>
@@ -252,25 +302,38 @@ export function OverlayChatPanel({
                         src={assistantAvatarUrl}
                         alt=""
                         aria-hidden="true"
-                        className={`pointer-events-none absolute left-2 top-1.5 h-[18px] w-[18px] select-none rounded-full border border-[#d6ccbb] bg-[#efe8dc] object-cover ${
-                          isPendingAssistant ? "animate-pulse" : ""
-                        }`}
+                        className={joinClassNames(
+                          overlayClass(
+                            "assistantAvatar",
+                            "pointer-events-none absolute left-2 top-1.5 h-[18px] w-[18px] select-none rounded-full border border-[#d6ccbb] bg-[#efe8dc] object-cover"
+                          ),
+                          isPendingAssistant ? overlayClass("assistantAvatarPending", "animate-pulse") : null
+                        )}
                         onError={onAssistantAvatarError}
                       />
                     ) : (
                       <span
                         aria-hidden="true"
-                        className={`pointer-events-none absolute left-2 top-1.5 inline-flex h-[18px] w-[18px] select-none items-center justify-center rounded-full border border-[#d6ccbb] bg-[#efe8dc] text-[9px] font-semibold text-stone-700 ${
-                          isPendingAssistant ? "animate-pulse" : ""
-                        }`}
+                        className={joinClassNames(
+                          overlayClass(
+                            "assistantAvatarFallback",
+                            "pointer-events-none absolute left-2 top-1.5 inline-flex h-[18px] w-[18px] select-none items-center justify-center rounded-full border border-[#d6ccbb] bg-[#efe8dc] text-[9px] font-semibold text-stone-700"
+                          ),
+                          isPendingAssistant ? overlayClass("assistantAvatarPending", "animate-pulse") : null
+                        )}
                       >
                         {assistantAvatarFallbackLabel}
                       </span>
                     )
                   ) : null}
-                  <div className="max-w-none text-inherit [&_code]:rounded [&_code]:bg-stone-900/10 [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4">
+                  <div
+                    className={overlayClass(
+                      "markdownContent",
+                      "max-w-none text-inherit [&_code]:rounded [&_code]:bg-stone-900/10 [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
+                    )}
+                  >
                     {isPendingAssistant && !entry.text.trim() ? (
-                      <span className="block h-4" aria-hidden="true" />
+                      <span className={overlayClass("pendingShim", "block h-4")} aria-hidden="true" />
                     ) : (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{entry.text}</ReactMarkdown>
                     )}
@@ -283,12 +346,12 @@ export function OverlayChatPanel({
         <div ref={chatEndRef} />
       </section>
 
-      <footer className="border-t border-stone-300 bg-[#f3eee5] p-2">
+      <footer className={overlayClass("footer", "border-t border-stone-300 bg-[#f3eee5] p-2")}>
         {showModelPicker && selectableModels.length > 1 ? (
-          <div className="mb-1 flex items-center gap-1.5">
+          <div className={overlayClass("modelRow", "mb-1 flex items-center gap-1.5")}>
             <label
               htmlFor="admin-model-picker"
-              className="text-[10px] font-semibold uppercase tracking-wide text-stone-600"
+              className={overlayClass("modelLabel", "text-[10px] font-semibold uppercase tracking-wide text-stone-600")}
             >
               Model
             </label>
@@ -297,7 +360,10 @@ export function OverlayChatPanel({
               value={modelId ?? selectableModels[0]?.id}
               onChange={(event) => onModelChange(event.target.value)}
               disabled={sending}
-              className="h-7 min-w-0 flex-1 rounded border border-stone-300 bg-[#f7f2e8] px-2 text-[11px] text-stone-800 outline-none focus:border-stone-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className={overlayClass(
+                "modelSelect",
+                "h-7 min-w-0 flex-1 rounded border border-stone-300 bg-[#f7f2e8] px-2 text-[11px] text-stone-800 outline-none focus:border-stone-500 disabled:cursor-not-allowed disabled:opacity-60"
+              )}
             >
               {selectableModels.map((option) => (
                 <option key={option.id} value={option.id}>
@@ -309,12 +375,24 @@ export function OverlayChatPanel({
         ) : null}
 
         {selectedElement ? (
-          <div className="mb-1 flex items-center gap-1 rounded border border-stone-300 bg-[#e8dfd1] px-1.5 py-1">
-            <span className="inline-flex shrink-0 items-center justify-center rounded border border-stone-300 bg-[#f7f2e8] px-1 py-0.5 text-[9px] font-semibold text-stone-700">
+          <div
+            className={overlayClass(
+              "selectedElement",
+              "mb-1 flex items-center gap-1 rounded border border-stone-300 bg-[#e8dfd1] px-1.5 py-1"
+            )}
+          >
+            <span
+              className={overlayClass(
+                "selectedKind",
+                "inline-flex shrink-0 items-center justify-center rounded border border-stone-300 bg-[#f7f2e8] px-1 py-0.5 text-[9px] font-semibold text-stone-700"
+              )}
+            >
               {kindIcon(selectedElement.kind)}
             </span>
-            <p className="min-w-0 flex-1 truncate text-[10px] leading-3.5 text-stone-600">
-              <span className="font-semibold text-stone-800">{selectedElement.label}</span>
+            <p className={overlayClass("selectedText", "min-w-0 flex-1 truncate text-[10px] leading-3.5 text-stone-600")}>
+              <span className={overlayClass("selectedLabel", "font-semibold text-stone-800")}>
+                {selectedElement.label}
+              </span>
               <span> · {selectedElement.path}</span>
               {selectedElement.preview ? <span> · {selectedElement.preview}</span> : null}
             </p>
@@ -322,10 +400,18 @@ export function OverlayChatPanel({
               type="button"
               aria-label="Clear selected element"
               title="Clear selected element"
-              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-stone-300 bg-[#f7f2e8] text-stone-700 hover:bg-[#efe8dc]"
+              className={overlayClass(
+                "selectedClearButton",
+                "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-stone-300 bg-[#f7f2e8] text-stone-700 hover:bg-[#efe8dc]"
+              )}
               onClick={onClearSelectedElement}
             >
-              <svg viewBox="0 0 20 20" fill="none" className="h-3 w-3" aria-hidden="true">
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                className={overlayClass("selectedClearIcon", "h-3 w-3")}
+                aria-hidden="true"
+              >
                 <path
                   d="M5 5L15 15M15 5L5 15"
                   stroke="currentColor"
@@ -337,20 +423,26 @@ export function OverlayChatPanel({
           </div>
         ) : null}
 
-        <div className="flex gap-1.5">
+        <div className={overlayClass("composerRow", "flex gap-1.5")}>
           <textarea
             value={message}
             onChange={(event) => onMessageChange(event.target.value)}
             onKeyDown={onMessageKeyDown}
             rows={2}
             placeholder="Ask the agent to edit text, image URLs, or theme tokens"
-            className="flex-1 resize-none rounded border border-stone-300 bg-[#f4efe6] px-2 py-1.5 text-[12px] leading-4 text-stone-900 outline-none placeholder:text-stone-500 focus:border-stone-500"
+            className={overlayClass(
+              "composerInput",
+              "flex-1 resize-none rounded border border-stone-300 bg-[#f4efe6] px-2 py-1.5 text-[12px] leading-4 text-stone-900 outline-none placeholder:text-stone-500 focus:border-stone-500"
+            )}
           />
           <button
             type="button"
             onClick={onSend}
             disabled={!isAuthenticated || sending || !message.trim()}
-            className="rounded border border-stone-500 bg-stone-600 px-3 py-1.5 text-[12px] font-semibold text-stone-100 hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className={overlayClass(
+              "sendButton",
+              "rounded border border-stone-500 bg-stone-600 px-3 py-1.5 text-[12px] font-semibold text-stone-100 hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+            )}
           >
             {sending ? "Sending" : "Send"}
           </button>
@@ -376,26 +468,32 @@ export function OverlayHistoryPanel({
   onDeleteCheckpoint,
 }: OverlayHistoryPanelProps) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col p-2 text-[11px] leading-4">
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-        <div className="rounded border border-stone-300 bg-[#f8f3e9]">
-          <div className="border-b border-stone-200 px-2 py-1 font-semibold text-stone-700">
+    <section className={overlayClass("historySection", "flex min-h-0 flex-1 flex-col p-2 text-[11px] leading-4")}>
+      <div className={overlayClass("historyColumns", "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden")}>
+        <div className={overlayClass("historyCard", "rounded border border-stone-300 bg-[#f8f3e9]")}>
+          <div className={overlayClass("historyCardTitle", "border-b border-stone-200 px-2 py-1 font-semibold text-stone-700")}>
             Published ({history.published.length})
           </div>
-          <div className="max-h-40 overflow-auto px-2 py-1.5">
+          <div className={overlayClass("historyList", "max-h-40 overflow-auto px-2 py-1.5")}>
             {history.published.length > 0 ? (
-              <div className="space-y-1">
+              <div className={overlayClass("historyStack", "space-y-1")}>
                 {history.published.map((item) => (
                   <div
                     key={`pub-${item.id}`}
-                    className="flex items-center justify-between gap-2 rounded border border-stone-200 bg-[#f2ecdf] px-2 py-1"
+                    className={overlayClass(
+                      "historyItem",
+                      "flex items-center justify-between gap-2 rounded border border-stone-200 bg-[#f2ecdf] px-2 py-1"
+                    )}
                   >
-                    <span className="truncate text-[10px] text-stone-700">
+                    <span className={overlayClass("historyTimestamp", "truncate text-[10px] text-stone-700")}>
                       {formatHistoryTime(item.createdAt)}
                     </span>
                     <button
                       type="button"
-                      className="rounded border border-stone-300 bg-[#f7f2e8] px-1.5 py-0.5 text-[10px] text-stone-700 hover:bg-[#efe8dc]"
+                      className={overlayClass(
+                        "historyAction",
+                        "rounded border border-stone-300 bg-[#f7f2e8] px-1.5 py-0.5 text-[10px] text-stone-700 hover:bg-[#efe8dc]"
+                      )}
                       onClick={() => onRestorePublished(item)}
                     >
                       Restore
@@ -404,36 +502,49 @@ export function OverlayHistoryPanel({
                 ))}
               </div>
             ) : (
-              <p className="text-[10px] text-stone-500">No published snapshots.</p>
+              <p className={overlayClass("emptyText", "text-[10px] text-stone-500")}>No published snapshots.</p>
             )}
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col rounded border border-stone-300 bg-[#f8f3e9]">
-          <div className="border-b border-stone-200 px-2 py-1 font-semibold text-stone-700">
+        <div
+          className={overlayClass(
+            "historyCard",
+            "flex min-h-0 flex-1 flex-col rounded border border-stone-300 bg-[#f8f3e9]"
+          )}
+        >
+          <div className={overlayClass("historyCardTitle", "border-b border-stone-200 px-2 py-1 font-semibold text-stone-700")}>
             Checkpoints ({history.checkpoints.length})
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-2 py-1.5">
+          <div className={overlayClass("historyList", "min-h-0 flex-1 overflow-auto px-2 py-1.5")}>
             {history.checkpoints.length > 0 ? (
-              <div className="space-y-1">
+              <div className={overlayClass("historyStack", "space-y-1")}>
                 {history.checkpoints.map((item) => (
                   <div
                     key={`cp-${item.id}`}
-                    className="flex items-start justify-between gap-2 rounded border border-stone-200 bg-[#f2ecdf] px-2 py-1"
+                    className={overlayClass(
+                      "historyItemCheckpoint",
+                      "flex items-start justify-between gap-2 rounded border border-stone-200 bg-[#f2ecdf] px-2 py-1"
+                    )}
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[10px] text-stone-700">
+                    <div className={overlayClass("historyTextBlock", "min-w-0 flex-1")}>
+                      <p className={overlayClass("historyTimestamp", "truncate text-[10px] text-stone-700")}>
                         {formatHistoryTime(item.createdAt)}
                       </p>
                       {item.reason ? (
-                        <p className="truncate text-[10px] text-stone-500">{item.reason}</p>
+                        <p className={overlayClass("historyReason", "truncate text-[10px] text-stone-500")}>
+                          {item.reason}
+                        </p>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className={overlayClass("historyActions", "flex items-center gap-1")}>
                       <button
                         type="button"
                         disabled={deletingCheckpointId === item.id}
-                        className="rounded border border-stone-300 bg-[#f7f2e8] px-1.5 py-0.5 text-[10px] text-stone-700 hover:bg-[#efe8dc] disabled:cursor-not-allowed disabled:opacity-50"
+                        className={overlayClass(
+                          "historyAction",
+                          "rounded border border-stone-300 bg-[#f7f2e8] px-1.5 py-0.5 text-[10px] text-stone-700 hover:bg-[#efe8dc] disabled:cursor-not-allowed disabled:opacity-50"
+                        )}
                         onClick={() => onRestoreCheckpoint(item)}
                       >
                         Restore
@@ -443,10 +554,18 @@ export function OverlayHistoryPanel({
                         aria-label="Delete checkpoint"
                         title="Delete checkpoint"
                         disabled={deletingCheckpointId === item.id}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-stone-300 bg-[#f7f2e8] text-stone-700 hover:bg-[#efe8dc] disabled:cursor-not-allowed disabled:opacity-50"
+                        className={overlayClass(
+                          "historyDelete",
+                          "inline-flex h-6 w-6 items-center justify-center rounded border border-stone-300 bg-[#f7f2e8] text-stone-700 hover:bg-[#efe8dc] disabled:cursor-not-allowed disabled:opacity-50"
+                        )}
                         onClick={() => onDeleteCheckpoint(item)}
                       >
-                        <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          className={overlayClass("icon", "h-3.5 w-3.5")}
+                          aria-hidden="true"
+                        >
                           <path
                             d="M4.5 5.5H15.5M8 3.75H12M7 7.5V13.5M10 7.5V13.5M13 7.5V13.5M6.5 5.5L7 15C7.03 15.6 7.53 16.08 8.13 16.08H11.87C12.47 16.08 12.97 15.6 13 15L13.5 5.5"
                             stroke="currentColor"
@@ -461,7 +580,7 @@ export function OverlayHistoryPanel({
                 ))}
               </div>
             ) : (
-              <p className="text-[10px] text-stone-500">No checkpoints yet.</p>
+              <p className={overlayClass("emptyText", "text-[10px] text-stone-500")}>No checkpoints yet.</p>
             )}
           </div>
         </div>
@@ -479,7 +598,10 @@ export function OverlayLauncherButton({ onOpen }: OverlayLauncherButtonProps) {
     <button
       type="button"
       onClick={onOpen}
-      className="fixed bottom-4 right-4 z-[100] rounded-full border border-stone-600 bg-stone-700 px-4 py-2 text-[12px] font-semibold text-stone-100 shadow-xl hover:bg-stone-800"
+      className={overlayClass(
+        "launcherButton",
+        "fixed bottom-4 right-4 z-[100] rounded-full border border-stone-600 bg-stone-700 px-4 py-2 text-[12px] font-semibold text-stone-100 shadow-xl hover:bg-stone-800"
+      )}
       style={{ fontFamily: OVERLAY_FONT_FAMILY }}
     >
       Chat to Webmaster
