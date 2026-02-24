@@ -1,6 +1,6 @@
-import type { APIGatewayProxyResult } from "aws-lambda";
+import type { ApiGatewayProxyResult } from "./types";
 
-export function jsonResponse(statusCode: number, body: unknown): APIGatewayProxyResult {
+export function jsonResponse(statusCode: number, body: unknown): ApiGatewayProxyResult {
   return {
     statusCode,
     headers: {
@@ -13,7 +13,10 @@ export function jsonResponse(statusCode: number, body: unknown): APIGatewayProxy
   };
 }
 
-export function sseResponse(statusCode: number, events: Array<{ event: string; data: unknown }>): APIGatewayProxyResult {
+export function sseResponse(
+  statusCode: number,
+  events: Array<{ event: string; data: unknown }>
+): ApiGatewayProxyResult {
   const body = events
     .map((item) => {
       const payload = typeof item.data === "string" ? item.data : JSON.stringify(item.data);
