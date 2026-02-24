@@ -12,19 +12,25 @@ npm i @webmaster-droid/contracts @webmaster-droid/web @webmaster-droid/server
 
 ```bash
 npx @webmaster-droid/cli doctor
-npx @webmaster-droid/cli init --framework next
+npx @webmaster-droid/cli init
 ```
 
 ## 3. Wrap runtime in app
 
 ```tsx
 import { WebmasterDroidRuntime } from "@webmaster-droid/web";
-import "@webmaster-droid/web/styles.css";
+import "@webmaster-droid/web/theme.css"; // optional visual skin
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return <WebmasterDroidRuntime>{children}</WebmasterDroidRuntime>;
 }
 ```
+
+Notes:
+
+- Overlay core layout styles are injected automatically by default.
+- Tailwind hosts do not need `@source` entries or package class scanning hacks.
+- For strict CSP (no inline styles), import `@webmaster-droid/web/core.css` and use `injectCoreStyles={false}`.
 
 ## 4. Use editable components
 
