@@ -16,7 +16,8 @@ export { WebmasterDroidProvider, useWebmasterDroid } from "./context";
 export { WebmasterDroidOverlay } from "./overlay";
 export { WebmasterDroidRuntime, useWebmasterDroidCmsDocument } from "./runtime";
 export { getSupabaseBrowserClient } from "./supabase-client";
-export type { WebmasterDroidCmsContextValue } from "./runtime";
+export type { WebmasterDroidOverlayProps } from "./overlay";
+export type { WebmasterDroidCmsContextValue, WebmasterDroidRuntimeProps } from "./runtime";
 
 export {
   deleteCheckpoint,

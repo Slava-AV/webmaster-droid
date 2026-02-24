@@ -59,8 +59,7 @@ program
 
 program
   .command("init")
-  .description("Initialize optional webmaster-droid config in current project")
-  .option("--framework <framework>", "framework", "next")
+  .description("Initialize webmaster-droid environment template in current project")
   .option("--backend <backend>", "backend (supabase|aws)", "supabase")
   .option("--out <dir>", "output dir", ".")
   .action(async (opts) => {
@@ -71,27 +70,13 @@ program
 
     const backend = backendRaw as "supabase" | "aws";
     const outDir = path.resolve(process.cwd(), opts.out);
-    const configPath = path.join(outDir, "webmaster-droid.config.ts");
-    await ensureDir(configPath);
-
-    const config = `export default {
-  framework: "${opts.framework}",
-  backend: "${backend}",
-  apiBaseUrlEnv: "NEXT_PUBLIC_AGENT_API_BASE_URL"
-};\n`;
-
-    try {
-      await fs.access(configPath);
-      console.log(`Config already exists: ${configPath}`);
-    } catch {
-      await fs.writeFile(configPath, config, "utf8");
-      console.log(`Created: ${configPath}`);
-    }
 
     const envExample = path.join(outDir, ".env.webmaster-droid.example");
+    let createdEnvTemplate = false;
     try {
       await fs.access(envExample);
     } catch {
+      await ensureDir(envExample);
       await fs.writeFile(
         envExample,
         [
@@ -119,8 +104,16 @@ program
         ].join("\n") + "\n",
         "utf8"
       );
-      console.log(`Created: ${envExample}`);
+      createdEnvTemplate = true;
     }
+
+    if (createdEnvTemplate) {
+      console.log(`Created: ${envExample}`);
+    } else {
+      console.log(`Env template already exists: ${envExample}`);
+    }
+
+    console.log(`Backend preset: ${backend}`);
   });
 
 const schema = program.command("schema").description("Optional schema helpers");

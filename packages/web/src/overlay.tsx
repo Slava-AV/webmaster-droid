@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { formatHistoryTime, OVERLAY_FONT_FAMILY } from "./overlay/utils";
 import {
   OverlayChatPanel,
@@ -8,10 +10,23 @@ import {
   OverlayLauncherButton,
   OverlayLoginPanel,
 } from "./overlay/components";
+import { overlayClass } from "./overlay/class-names";
+import { ensureOverlayCoreStyles } from "./overlay/core-styles";
 import { useOverlayController } from "./overlay/controller";
 
-export function WebmasterDroidOverlay() {
+export type WebmasterDroidOverlayProps = {
+  injectCoreStyles?: boolean;
+};
+
+export function WebmasterDroidOverlay({ injectCoreStyles = true }: WebmasterDroidOverlayProps) {
   const controller = useOverlayController();
+  useEffect(() => {
+    if (!injectCoreStyles) {
+      return;
+    }
+
+    ensureOverlayCoreStyles();
+  }, [injectCoreStyles]);
 
   if (!controller.isAdminMode) {
     return null;
@@ -23,7 +38,10 @@ export function WebmasterDroidOverlay() {
         <div
           ref={controller.overlayRootRef}
           data-admin-overlay-root
-          className="fixed bottom-4 right-4 z-[100] flex h-[62vh] w-[min(480px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-stone-300 bg-[#f6f2eb] text-stone-900 shadow-2xl"
+          className={overlayClass(
+            "panel",
+            "fixed bottom-4 right-4 z-[100] flex h-[62vh] w-[min(480px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-stone-300 bg-[#f6f2eb] text-stone-900 shadow-2xl"
+          )}
           style={{ fontFamily: OVERLAY_FONT_FAMILY }}
         >
           <OverlayHeader

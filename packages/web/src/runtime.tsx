@@ -37,6 +37,7 @@ type CmsRuntimeBridgeProps<TDocument extends AnyCmsDocument> = {
   fallbackDocument?: TDocument;
   includeOverlay: boolean;
   applyThemeTokens: boolean;
+  injectCoreStyles: boolean;
 };
 
 type RuntimeState<TDocument extends AnyCmsDocument> = {
@@ -141,24 +142,32 @@ function CmsRuntimeBridge<TDocument extends AnyCmsDocument>(
       <EditableProvider document={value.document} mode={stage} enabled={isAdminMode}>
         {content}
       </EditableProvider>
-      {props.includeOverlay ? <WebmasterDroidOverlay /> : null}
+      {props.includeOverlay ? <WebmasterDroidOverlay injectCoreStyles={props.injectCoreStyles} /> : null}
     </CmsRuntimeContext.Provider>
   );
 }
 
-export function WebmasterDroidRuntime<TDocument extends AnyCmsDocument = AnyCmsDocument>(props: {
+export type WebmasterDroidRuntimeProps<
+  TDocument extends AnyCmsDocument = AnyCmsDocument,
+> = {
   children: ReactNode;
   fallbackDocument?: TDocument;
   config?: WebmasterDroidConfig;
   includeOverlay?: boolean;
   applyThemeTokens?: boolean;
-}) {
+  injectCoreStyles?: boolean;
+};
+
+export function WebmasterDroidRuntime<TDocument extends AnyCmsDocument = AnyCmsDocument>(
+  props: WebmasterDroidRuntimeProps<TDocument>
+) {
   return (
     <WebmasterDroidProvider config={props.config}>
       <CmsRuntimeBridge<TDocument>
         fallbackDocument={props.fallbackDocument}
         includeOverlay={props.includeOverlay ?? true}
         applyThemeTokens={props.applyThemeTokens ?? true}
+        injectCoreStyles={props.injectCoreStyles ?? true}
       >
         {props.children}
       </CmsRuntimeBridge>

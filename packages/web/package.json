@@ -9,10 +9,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./core.css": "./dist/core.css",
+    "./theme.css": "./dist/theme.css"
   },
   "sideEffects": [
-    "./dist/styles.css"
+    "./dist/core.css",
+    "./dist/theme.css"
   ],
   "files": [
     "dist"
@@ -31,15 +33,14 @@
     "sanitize-html": "^2.17.1"
   },
   "scripts": {
-    "build": "npm run build:js && npm run build:styles",
+    "build": "npm run build:js && npm run build:assets",
     "build:js": "tsup src/index.tsx --format esm --dts --clean",
-    "build:styles": "tailwindcss -i src/styles.css -o dist/styles.css --minify",
-    "typecheck": "tsc --noEmit"
+    "build:assets": "node ./scripts/copy-css.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node ../../scripts/run-workspace-tests.mjs"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.0",
-    "@types/sanitize-html": "^2.16.0",
-    "tailwindcss": "^4.1.0"
+    "@types/sanitize-html": "^2.16.0"
   },
   "description": "Unified web runtime and editable React components for webmaster-droid.",
   "license": "MIT",
