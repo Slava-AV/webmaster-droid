@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { formatHistoryTime, OVERLAY_FONT_FAMILY } from "./overlay/utils";
 import {
   OverlayChatPanel,
@@ -9,10 +11,22 @@ import {
   OverlayLoginPanel,
 } from "./overlay/components";
 import { overlayClass } from "./overlay/class-names";
+import { ensureOverlayCoreStyles } from "./overlay/core-styles";
 import { useOverlayController } from "./overlay/controller";
 
-export function WebmasterDroidOverlay() {
+export type WebmasterDroidOverlayProps = {
+  injectCoreStyles?: boolean;
+};
+
+export function WebmasterDroidOverlay({ injectCoreStyles = true }: WebmasterDroidOverlayProps) {
   const controller = useOverlayController();
+  useEffect(() => {
+    if (!injectCoreStyles) {
+      return;
+    }
+
+    ensureOverlayCoreStyles();
+  }, [injectCoreStyles]);
 
   if (!controller.isAdminMode) {
     return null;
