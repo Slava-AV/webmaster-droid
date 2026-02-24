@@ -7,12 +7,14 @@
 - [Content edits guide](guides/content-edits.md)
 - [Image workflows guide](guides/image-workflows.md)
 - [Reliability and safety](guides/reliability-and-safety.md)
+- [Supabase production checklist](guides/supabase-production-checklist.md)
 - [Non-technical editor journey](user-journeys/non-technical-editor.md)
 
 ## For developers
 
 - [New build integration](getting-started/new-build.md)
 - [New build (Supabase)](getting-started/new-build-supabase.md)
+- [Supabase function template](getting-started/templates/supabase/functions/webmaster-api/index.ts)
 - [New build (AWS)](getting-started/new-build-aws.md)
 - [Migrate an existing website](getting-started/migrate-existing.md)
 - [Optional migration skill](migration/optional-skill.md)

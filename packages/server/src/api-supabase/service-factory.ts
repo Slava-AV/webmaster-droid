@@ -4,6 +4,10 @@ import {
 } from "@webmaster-droid/contracts";
 
 import { CmsService } from "../core";
+import {
+  readFirstTrimmedEnv,
+  readTrimmedEnv,
+} from "../runtime-env";
 import { SupabaseCmsStorage } from "../storage-supabase";
 
 const DEFAULT_SUPABASE_BUCKET = "webmaster-droid-cms";
@@ -12,7 +16,7 @@ const DEFAULT_STORAGE_PREFIX = "cms";
 let servicePromise: Promise<CmsService> | null = null;
 
 function requireEnv(name: string): string {
-  const value = process.env[name];
+  const value = readTrimmedEnv(name);
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
@@ -21,7 +25,7 @@ function requireEnv(name: string): string {
 }
 
 function parseBooleanEnv(name: string, defaultValue: boolean): boolean {
-  const raw = process.env[name];
+  const raw = readTrimmedEnv(name);
   if (!raw) {
     return defaultValue;
   }
@@ -30,20 +34,14 @@ function parseBooleanEnv(name: string, defaultValue: boolean): boolean {
 }
 
 function parseOptionalEnv(name: string): string | undefined {
-  const raw = process.env[name];
-  if (!raw) {
-    return undefined;
-  }
-
-  const trimmed = raw.trim();
-  return trimmed || undefined;
+  return readTrimmedEnv(name);
 }
 
 function buildModelConfig(): ModelProviderConfig {
   return {
     openaiEnabled: parseBooleanEnv("MODEL_OPENAI_ENABLED", true),
     geminiEnabled: parseBooleanEnv("MODEL_GEMINI_ENABLED", true),
-    defaultModelId: process.env.DEFAULT_MODEL_ID ?? "openai:gpt-5.2",
+    defaultModelId: parseOptionalEnv("DEFAULT_MODEL_ID") ?? "openai:gpt-5.2",
   };
 }
 
@@ -66,7 +64,7 @@ function normalizeAllowedPath(path: string): string | null {
 }
 
 function parseAllowedInternalPathsEnv(): string[] {
-  const raw = process.env.CMS_ALLOWED_INTERNAL_PATHS;
+  const raw = parseOptionalEnv("CMS_ALLOWED_INTERNAL_PATHS");
   if (!raw) {
     return ["/"];
   }
@@ -91,17 +89,24 @@ function resolveStoragePrefix(): string {
   return parseOptionalEnv("CMS_STORAGE_PREFIX") ?? DEFAULT_STORAGE_PREFIX;
 }
 
+function resolveSupabaseUrl(): string {
+  const value = readFirstTrimmedEnv(["CMS_SUPABASE_URL", "SUPABASE_URL"]);
+  if (!value) {
+    throw new Error(
+      "Missing required environment variable: SUPABASE_URL (or CMS_SUPABASE_URL)"
+    );
+  }
+
+  return value;
+}
+
 function deriveSupabasePublicBaseUrl(bucket: string): string | undefined {
   const explicit = parseOptionalEnv("CMS_PUBLIC_BASE_URL");
   if (explicit) {
     return explicit;
   }
 
-  const supabaseUrl = parseOptionalEnv("SUPABASE_URL");
-  if (!supabaseUrl) {
-    return undefined;
-  }
-
+  const supabaseUrl = resolveSupabaseUrl();
   const normalized = supabaseUrl.replace(/\/+$/, "");
   return `${normalized}/storage/v1/object/public/${bucket}`;
 }
@@ -111,7 +116,7 @@ export async function getCmsService(): Promise<CmsService> {
     servicePromise = (async () => {
       const bucket = resolveStorageBucket();
       const storage = new SupabaseCmsStorage({
-        supabaseUrl: requireEnv("SUPABASE_URL"),
+        supabaseUrl: resolveSupabaseUrl(),
         serviceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
         bucket,
         prefix: resolveStoragePrefix(),

@@ -3,12 +3,13 @@ import {
   type ModelProviderConfig,
 } from "@webmaster-droid/contracts";
 import { CmsService } from "../core";
+import { readTrimmedEnv } from "../runtime-env";
 import { S3CmsStorage } from "../storage-s3";
 
 let servicePromise: Promise<CmsService> | null = null;
 
 function requireEnv(name: string): string {
-  const value = process.env[name];
+  const value = readTrimmedEnv(name);
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
@@ -17,7 +18,7 @@ function requireEnv(name: string): string {
 }
 
 function parseBooleanEnv(name: string, defaultValue: boolean): boolean {
-  const raw = process.env[name];
+  const raw = readTrimmedEnv(name);
   if (!raw) {
     return defaultValue;
   }
@@ -26,20 +27,14 @@ function parseBooleanEnv(name: string, defaultValue: boolean): boolean {
 }
 
 function parseOptionalEnv(name: string): string | undefined {
-  const raw = process.env[name];
-  if (!raw) {
-    return undefined;
-  }
-
-  const trimmed = raw.trim();
-  return trimmed || undefined;
+  return readTrimmedEnv(name);
 }
 
 function buildModelConfig(): ModelProviderConfig {
   return {
     openaiEnabled: parseBooleanEnv("MODEL_OPENAI_ENABLED", true),
     geminiEnabled: parseBooleanEnv("MODEL_GEMINI_ENABLED", true),
-    defaultModelId: process.env.DEFAULT_MODEL_ID ?? "openai:gpt-5.2",
+    defaultModelId: parseOptionalEnv("DEFAULT_MODEL_ID") ?? "openai:gpt-5.2",
   };
 }
 
@@ -62,7 +57,7 @@ function normalizeAllowedPath(path: string): string | null {
 }
 
 function parseAllowedInternalPathsEnv(): string[] {
-  const raw = process.env.CMS_ALLOWED_INTERNAL_PATHS;
+  const raw = parseOptionalEnv("CMS_ALLOWED_INTERNAL_PATHS");
   if (!raw) {
     return ["/"];
   }

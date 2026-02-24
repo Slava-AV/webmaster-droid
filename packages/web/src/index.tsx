@@ -15,6 +15,7 @@ export { buildApiUrl, resolveWebmasterDroidConfig } from "./config";
 export { WebmasterDroidProvider, useWebmasterDroid } from "./context";
 export { WebmasterDroidOverlay } from "./overlay";
 export { WebmasterDroidRuntime, useWebmasterDroidCmsDocument } from "./runtime";
+export { normalizeCmsDocumentWithFallback } from "./normalize-document";
 export { getSupabaseBrowserClient } from "./supabase-client";
 export type { WebmasterDroidOverlayProps } from "./overlay";
 export type { WebmasterDroidCmsContextValue, WebmasterDroidRuntimeProps } from "./runtime";
