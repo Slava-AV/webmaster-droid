@@ -35,14 +35,21 @@ Initialize project configuration:
 
 ```bash
 npx @webmaster-droid/cli doctor
-npx @webmaster-droid/cli init --framework next
+npx @webmaster-droid/cli init
 ```
 
 Use AWS instead:
 
 ```bash
-npx @webmaster-droid/cli init --framework next --backend aws
+npx @webmaster-droid/cli init --backend aws
 ```
+
+Safe overlay styles:
+
+- Required overlay layout styles are injected automatically by runtime.
+- Optional overlay skin: `import "@webmaster-droid/web/theme.css";`
+- Strict CSP path: `import "@webmaster-droid/web/core.css";` and set `injectCoreStyles={false}`.
+- Tailwind hosts do not need `@source` or package class scanning for overlay placement.
 
 Read:
 
