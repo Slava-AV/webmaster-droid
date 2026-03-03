@@ -307,23 +307,31 @@ program
       });
 
       const changed: Array<Record<string, unknown>> = [];
+      const failures: Array<{ file: string; error: string }> = [];
 
       for (const file of files) {
-        const source = await fs.readFile(file, "utf8");
-        const transformed = transformEditableTextCodemod(source, file, process.cwd());
-        if (!transformed.changed) {
-          continue;
-        }
-        const next = transformed.next;
-
         const relFile = path.relative(process.cwd(), file);
-        changed.push({
-          file: relFile,
-          patch: createTwoFilesPatch(relFile, relFile, source, next),
-        });
+        try {
+          const source = await fs.readFile(file, "utf8");
+          const transformed = transformEditableTextCodemod(source, file, root);
+          if (!transformed.changed) {
+            continue;
+          }
+          const next = transformed.next;
 
-        if (opts.apply) {
-          await fs.writeFile(file, next, "utf8");
+          changed.push({
+            file: relFile,
+            patch: createTwoFilesPatch(relFile, relFile, source, next),
+          });
+
+          if (opts.apply) {
+            await fs.writeFile(file, next, "utf8");
+          }
+        } catch (error) {
+          failures.push({
+            file: relFile,
+            error: errorToMessage(error),
+          });
         }
       }
 
@@ -333,10 +341,46 @@ program
         source: root,
         apply: Boolean(opts.apply),
         changedFiles: changed.length,
+        failedFiles: failures.length,
+        failures,
         changes: changed,
       };
       await ensureDir(output);
       await fs.writeFile(output, JSON.stringify(report, null, 2) + "\n", "utf8");
+
+      if (failures.length > 0) {
+        const errorMessage = failures
+          .map((item) => `${item.file}: ${item.error}`)
+          .join("; ");
+
+        if (opts.json) {
+          emitCliEnvelope(
+            {
+              ok: false,
+              command: "codemod",
+              version: CLI_VERSION,
+              timestamp: new Date().toISOString(),
+              data: {
+                reportPath: output,
+                source: root,
+                apply: Boolean(opts.apply),
+                changedFiles: changed.length,
+              },
+              errors: [errorMessage],
+            },
+            true
+          );
+          process.exitCode = 1;
+          return;
+        }
+
+        console.error(`Codemod encountered ${failures.length} file error(s). Report: ${output}`);
+        for (const failure of failures) {
+          console.error(`- ${failure.file}: ${failure.error}`);
+        }
+        process.exitCode = 1;
+        return;
+      }
 
       if (opts.json) {
         emitCliEnvelope({
