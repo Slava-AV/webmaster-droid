@@ -1,5 +1,12 @@
 # @webmaster-droid/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- 95756c4: Improve first-run setup stability by adding editable-path seed generation guidance and hardening Supabase event-log initialization and missing-object handling. Also documents array-rendered `EditableText` patterns and overlay avatar/font defaults.
+- 5dbec35: Improve EditableText codemod stability for real-world JSX patterns, reduce risky rewrites, and expand tests for migration safety.
+
 ## 0.4.0
 
 ### Minor Changes
