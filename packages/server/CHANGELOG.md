@@ -1,5 +1,11 @@
 # @webmaster-droid/server
 
+## 0.3.1
+
+### Patch Changes
+
+- 95756c4: Improve first-run setup stability by adding editable-path seed generation guidance and hardening Supabase event-log initialization and missing-object handling. Also documents array-rendered `EditableText` patterns and overlay avatar/font defaults.
+
 ## 0.3.0
 
 ### Minor Changes
