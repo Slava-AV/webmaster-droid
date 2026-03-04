@@ -11,7 +11,7 @@ const DEFAULT_CONFIG: ResolvedWebmasterDroidConfig = {
   modeQueryValue: "admin",
   modeStorageKey: "webmaster_droid_admin_mode",
   defaultModelId: "openai:gpt-5.2",
-  assistantAvatarUrl: "/assets/admin/webmaster-avatar.png",
+  assistantAvatarUrl: "",
   assistantAvatarFallback: "W",
 };
 

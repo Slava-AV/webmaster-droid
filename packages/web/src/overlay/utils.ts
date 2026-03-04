@@ -126,4 +126,4 @@ export function kindIcon(kind: "text" | "image" | "link" | "section"): string {
 }
 
 export const OVERLAY_FONT_FAMILY =
-  "var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  "var(--font-ibm-plex-mono, ui-monospace), SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";

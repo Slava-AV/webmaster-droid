@@ -20,13 +20,60 @@ npx @webmaster-droid/cli codemod apps/site/src --out .webmaster-droid/codemod-re
 npx @webmaster-droid/cli codemod apps/site/src --apply --out .webmaster-droid/codemod-report.applied.json
 ```
 
-## 4. Build schema manifest (optional but recommended)
+## 4. Generate seed document from editable paths
+
+Generate a seed document that matches converted `Editable*` paths before first editor use:
+
+```bash
+npx @webmaster-droid/cli seed apps/site/src --out cms/seed.from-editables.json
+```
+
+Then upload or copy this seed into both stage files:
+
+- `cms/live/current.json`
+- `cms/draft/current.json`
+
+Why this step matters:
+
+- Mutations only apply to existing paths.
+- If stage files are still empty defaults, first edits will fail with `path does not exist`.
+
+## 5. Build schema manifest (optional but recommended)
 
 ```bash
 npx @webmaster-droid/cli schema build --input cms/schema.webmaster.ts --output cms/schema.manifest.json
 ```
 
-## 5. Validate and test
+## 6. Handle array-rendered content explicitly
+
+Codemod handles static JSX text. For array-driven UI (`items.map(...)`), add explicit editable components:
+
+```tsx
+{cards.map((card, i) => (
+  <article key={card.id}>
+    <h3>
+      <EditableText
+        path={`pages.gallery.cards.${i}.title`}
+        fallback={card.title}
+      />
+    </h3>
+    <p>
+      <EditableText
+        path={`pages.gallery.cards.${i}.description`}
+        fallback={card.description}
+      />
+    </p>
+  </article>
+))}
+```
+
+After adding new paths, regenerate and reseed:
+
+```bash
+npx @webmaster-droid/cli seed apps/site/src --out cms/seed.from-editables.json
+```
+
+## 7. Validate and test
 
 ```bash
 npx @webmaster-droid/cli doctor
@@ -35,7 +82,7 @@ npm run typecheck
 npm test
 ```
 
-## 6. Optional migration skill
+## 8. Optional migration skill
 
 Use migration skill only if you want extra guided conversion assistance.
 

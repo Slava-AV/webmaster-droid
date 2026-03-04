@@ -52,6 +52,258 @@ async function readJson<T>(filePath: string): Promise<T> {
   return JSON.parse(raw) as T;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function splitPath(pathValue: string): string[] {
+  return pathValue
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+}
+
+function readByPath(input: unknown, pathValue: string): unknown {
+  const segments = splitPath(pathValue);
+  let current: unknown = input;
+
+  for (const segment of segments) {
+    if (Array.isArray(current)) {
+      const index = Number(segment);
+      if (Number.isNaN(index)) {
+        return undefined;
+      }
+
+      current = current[index];
+      continue;
+    }
+
+    if (!isRecord(current)) {
+      return undefined;
+    }
+
+    current = current[segment];
+  }
+
+  return current;
+}
+
+function writeByPath(input: unknown, pathValue: string, value: unknown): boolean {
+  const segments = splitPath(pathValue);
+  if (segments.length === 0) {
+    return false;
+  }
+
+  let current: unknown = input;
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const segment = segments[index];
+    if (Array.isArray(current)) {
+      const itemIndex = Number(segment);
+      if (Number.isNaN(itemIndex)) {
+        return false;
+      }
+
+      if (current[itemIndex] === undefined) {
+        const next = segments[index + 1];
+        current[itemIndex] = /^\d+$/.test(next) ? [] : {};
+      }
+
+      current = current[itemIndex];
+      continue;
+    }
+
+    if (!isRecord(current)) {
+      return false;
+    }
+
+    if (current[segment] === undefined) {
+      const next = segments[index + 1];
+      current[segment] = /^\d+$/.test(next) ? [] : {};
+    }
+
+    current = current[segment];
+  }
+
+  const leaf = segments.at(-1);
+  if (!leaf) {
+    return false;
+  }
+
+  if (Array.isArray(current)) {
+    const itemIndex = Number(leaf);
+    if (Number.isNaN(itemIndex)) {
+      return false;
+    }
+
+    current[itemIndex] = value;
+    return true;
+  }
+
+  if (!isRecord(current)) {
+    return false;
+  }
+
+  current[leaf] = value;
+  return true;
+}
+
+type SeedDocument = {
+  meta: {
+    schemaVersion: number;
+    contentVersion: string;
+    updatedAt: string;
+    updatedBy: string;
+    [key: string]: unknown;
+  };
+  themeTokens: Record<string, unknown>;
+  layout: Record<string, unknown>;
+  pages: Record<string, unknown>;
+  seo: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+function createSeedDocument(): SeedDocument {
+  const now = new Date().toISOString();
+  return {
+    meta: {
+      schemaVersion: 1,
+      contentVersion: "seed_v1",
+      updatedAt: now,
+      updatedBy: "seed-generator",
+    },
+    themeTokens: {},
+    layout: {},
+    pages: {},
+    seo: {},
+  };
+}
+
+function normalizeSeedDocument(input: unknown): SeedDocument {
+  const defaults = createSeedDocument();
+  if (!isRecord(input)) {
+    return defaults;
+  }
+
+  const output: SeedDocument = {
+    ...defaults,
+    ...input,
+  } as SeedDocument;
+
+  const metaValue = isRecord(output.meta) ? output.meta : {};
+  output.meta = {
+    ...defaults.meta,
+    ...metaValue,
+  };
+
+  for (const key of ["themeTokens", "layout", "pages", "seo"] as const) {
+    if (!isRecord(output[key])) {
+      output[key] = {};
+    }
+  }
+
+  return output;
+}
+
+function extractIdentifierName(value: t.JSXOpeningElement["name"]): string | null {
+  if (t.isJSXIdentifier(value)) {
+    return value.name;
+  }
+
+  return null;
+}
+
+type AttributeValueResult =
+  | { kind: "missing" }
+  | { kind: "dynamic" }
+  | { kind: "static"; value: string };
+
+function staticTemplateLiteralValue(template: t.TemplateLiteral): string | null {
+  if (template.expressions.length > 0) {
+    return null;
+  }
+
+  return template.quasis.map((part) => part.value.cooked ?? part.value.raw).join("");
+}
+
+function resolveAttributeValue(
+  value: t.JSXAttribute["value"] | null | undefined
+): AttributeValueResult {
+  if (!value) {
+    return { kind: "missing" };
+  }
+
+  if (t.isStringLiteral(value)) {
+    return { kind: "static", value: value.value };
+  }
+
+  if (!t.isJSXExpressionContainer(value)) {
+    return { kind: "dynamic" };
+  }
+
+  const expression = value.expression;
+  if (t.isStringLiteral(expression)) {
+    return { kind: "static", value: expression.value };
+  }
+
+  if (t.isTemplateLiteral(expression)) {
+    const staticValue = staticTemplateLiteralValue(expression);
+    if (staticValue !== null) {
+      return { kind: "static", value: staticValue };
+    }
+  }
+
+  return { kind: "dynamic" };
+}
+
+function findAttribute(
+  node: t.JSXOpeningElement,
+  name: string
+): t.JSXAttribute | null {
+  for (const attribute of node.attributes) {
+    if (!t.isJSXAttribute(attribute)) {
+      continue;
+    }
+
+    if (!t.isJSXIdentifier(attribute.name)) {
+      continue;
+    }
+
+    if (attribute.name.name === name) {
+      return attribute;
+    }
+  }
+
+  return null;
+}
+
+type EditablePathSpec = {
+  pathProp: string;
+  fallbackProp: string;
+};
+
+const EDITABLE_COMPONENT_PATHS: Record<string, EditablePathSpec[]> = {
+  EditableText: [{ pathProp: "path", fallbackProp: "fallback" }],
+  EditableRichText: [{ pathProp: "path", fallbackProp: "fallback" }],
+  EditableImage: [
+    { pathProp: "path", fallbackProp: "fallbackSrc" },
+    { pathProp: "altPath", fallbackProp: "fallbackAlt" },
+  ],
+  EditableLink: [
+    { pathProp: "hrefPath", fallbackProp: "fallbackHref" },
+    { pathProp: "labelPath", fallbackProp: "fallbackLabel" },
+  ],
+};
+
+function isSeedableEditablePath(pathValue: string): boolean {
+  return (
+    pathValue.startsWith("pages.") ||
+    pathValue.startsWith("layout.") ||
+    pathValue.startsWith("seo.") ||
+    pathValue.startsWith("themeTokens.")
+  );
+}
+
 program
   .name("webmaster-droid")
   .description("Webmaster Droid CLI")
@@ -179,6 +431,210 @@ schema
     await ensureDir(output);
     await fs.writeFile(output, JSON.stringify(manifest, null, 2) + "\n", "utf8");
     console.log(`Wrote manifest: ${output}`);
+  });
+
+program
+  .command("seed")
+  .description("Generate CMS seed document from Editable component paths")
+  .argument("<srcDir>", "source directory")
+  .option("--out <file>", "seed output file", "cms/seed.from-editables.json")
+  .option("--base <file>", "merge into an existing seed document")
+  .option("--json", "emit machine-readable JSON output", false)
+  .action(async (srcDir, opts) => {
+    try {
+      const root = path.resolve(process.cwd(), srcDir);
+      let rootStat: Awaited<ReturnType<typeof fs.stat>>;
+      try {
+        rootStat = await fs.stat(root);
+      } catch {
+        throw new Error(`Source directory not found: ${root}`);
+      }
+
+      if (!rootStat.isDirectory()) {
+        throw new Error(`Source path is not a directory: ${root}`);
+      }
+
+      const files = await glob("**/*.{ts,tsx,js,jsx}", {
+        cwd: root,
+        absolute: true,
+        ignore: ["**/*.d.ts", "**/node_modules/**", "**/.next/**", "**/dist/**"],
+      });
+
+      const staticPaths = new Map<string, { fallback: string; source: string; line?: number }>();
+      const dynamicPaths: Array<{ file: string; line?: number; prop: string }> = [];
+      const invalidPaths: Array<{ file: string; line?: number; path: string }> = [];
+
+      for (const file of files) {
+        const code = await fs.readFile(file, "utf8");
+        const ast = parse(code, {
+          sourceType: "module",
+          plugins: ["typescript", "jsx"],
+        });
+
+        traverse(ast, {
+          JSXOpeningElement(pathNode) {
+            const componentName = extractIdentifierName(pathNode.node.name);
+            if (!componentName) {
+              return;
+            }
+
+            const specs = EDITABLE_COMPONENT_PATHS[componentName];
+            if (!specs) {
+              return;
+            }
+
+            for (const spec of specs) {
+              const pathAttr = findAttribute(pathNode.node, spec.pathProp);
+              const pathValue = resolveAttributeValue(pathAttr?.value);
+              if (pathValue.kind === "missing") {
+                continue;
+              }
+
+              const relFile = path.relative(process.cwd(), file);
+              if (pathValue.kind === "dynamic") {
+                dynamicPaths.push({
+                  file: relFile,
+                  line: pathAttr?.loc?.start.line,
+                  prop: spec.pathProp,
+                });
+                continue;
+              }
+
+              const normalizedPath = pathValue.value.trim();
+              if (!normalizedPath) {
+                continue;
+              }
+
+              if (!isSeedableEditablePath(normalizedPath)) {
+                invalidPaths.push({
+                  file: relFile,
+                  line: pathAttr?.loc?.start.line,
+                  path: normalizedPath,
+                });
+                continue;
+              }
+
+              const fallbackAttr = findAttribute(pathNode.node, spec.fallbackProp);
+              const fallbackValue = resolveAttributeValue(fallbackAttr?.value);
+              const fallback =
+                fallbackValue.kind === "static" ? fallbackValue.value : "";
+
+              const existing = staticPaths.get(normalizedPath);
+              if (!existing) {
+                staticPaths.set(normalizedPath, {
+                  fallback,
+                  source: relFile,
+                  line: pathAttr?.loc?.start.line,
+                });
+                continue;
+              }
+
+              if (!existing.fallback && fallback) {
+                staticPaths.set(normalizedPath, {
+                  fallback,
+                  source: relFile,
+                  line: pathAttr?.loc?.start.line,
+                });
+              }
+            }
+          },
+        });
+      }
+
+      const baseFile = opts.base
+        ? path.resolve(process.cwd(), String(opts.base))
+        : null;
+      const baseSeed = baseFile
+        ? await readJson<Record<string, unknown>>(baseFile)
+        : createSeedDocument();
+      const seedDocument = normalizeSeedDocument(baseSeed);
+
+      let writtenPaths = 0;
+      let preservedPaths = 0;
+      let writeFailures = 0;
+      for (const [seedPath, entry] of staticPaths.entries()) {
+        const existingValue = readByPath(seedDocument, seedPath);
+        if (existingValue !== undefined) {
+          preservedPaths += 1;
+          continue;
+        }
+
+        const written = writeByPath(seedDocument, seedPath, entry.fallback);
+        if (written) {
+          writtenPaths += 1;
+        } else {
+          writeFailures += 1;
+        }
+      }
+
+      const output = path.resolve(process.cwd(), opts.out);
+      await ensureDir(output);
+      await fs.writeFile(output, JSON.stringify(seedDocument, null, 2) + "\n", "utf8");
+
+      const report = {
+        outputPath: output,
+        source: root,
+        baseFile,
+        totalFiles: files.length,
+        discoveredStaticPaths: staticPaths.size,
+        writtenPaths,
+        preservedPaths,
+        dynamicPathSkips: dynamicPaths.length,
+        invalidPathSkips: invalidPaths.length,
+        writeFailures,
+      };
+
+      if (opts.json) {
+        emitCliEnvelope({
+          ok: writeFailures === 0,
+          command: "seed",
+          version: CLI_VERSION,
+          timestamp: new Date().toISOString(),
+          data: report,
+          errors:
+            writeFailures > 0
+              ? [`Failed to write ${writeFailures} discovered path(s) into seed document.`]
+              : undefined,
+        }, writeFailures > 0);
+        if (writeFailures > 0) {
+          process.exitCode = 1;
+        }
+        return;
+      }
+
+      console.log(
+        `Seed generated. Static paths: ${staticPaths.size}. Written: ${writtenPaths}. Preserved: ${preservedPaths}. Output: ${output}`
+      );
+      if (dynamicPaths.length > 0) {
+        console.log(
+          `Skipped ${dynamicPaths.length} dynamic path expression(s). Convert them manually or use concrete index paths.`
+        );
+      }
+      if (invalidPaths.length > 0) {
+        console.log(
+          `Skipped ${invalidPaths.length} non-editable path(s) outside pages/layout/seo/themeTokens.`
+        );
+      }
+      if (writeFailures > 0) {
+        throw new Error(`Failed to write ${writeFailures} discovered path(s) into seed document.`);
+      }
+    } catch (error) {
+      if (!opts.json) {
+        throw error;
+      }
+
+      emitCliEnvelope(
+        {
+          ok: false,
+          command: "seed",
+          version: CLI_VERSION,
+          timestamp: new Date().toISOString(),
+          errors: [errorToMessage(error)],
+        },
+        true
+      );
+      process.exitCode = 1;
+    }
   });
 
 program

@@ -38,6 +38,14 @@ npx @webmaster-droid/cli doctor
 npx @webmaster-droid/cli init
 ```
 
+Generate first-run seed content from `Editable*` paths:
+
+```bash
+npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
+```
+
+Upload this seed to both `cms/live/current.json` and `cms/draft/current.json` before first editor mutations.
+
 Use AWS instead:
 
 ```bash
