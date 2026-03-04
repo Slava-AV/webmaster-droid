@@ -31,6 +31,8 @@ Notes:
 - Overlay core layout styles are injected automatically by default.
 - Tailwind hosts do not need `@source` entries or package class scanning hacks.
 - For strict CSP (no inline styles), import `@webmaster-droid/web/core.css` and use `injectCoreStyles={false}`.
+- By default, overlay uses avatar text fallback only (no image required). Set `config.assistantAvatarUrl` for a custom avatar image.
+- Overlay mono font uses `--font-ibm-plex-mono` when present and falls back to system monospace otherwise.
 
 ## 4. Use editable components
 
@@ -46,7 +48,30 @@ If your runtime documents can be partial, pass a schema-shaped fallback document
 
 - `normalizeCmsDocumentWithFallback` from `@webmaster-droid/web`
 
-## 5. Configure backend environment
+## 5. Generate initial seed from editable paths
+
+Before first editor use, generate a seed document from your `Editable*` components:
+
+```bash
+npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
+```
+
+Upload this seed to both stage files:
+
+- `cms/live/current.json`
+- `cms/draft/current.json`
+
+If these files remain empty defaults, edits will fail with `path does not exist`.
+
+For array-rendered sections (`items.map(...)`), add explicit indexed paths before seeding:
+
+```tsx
+{cards.map((card, i) => (
+  <EditableText path={`pages.gallery.cards.${i}.title`} fallback={card.title} />
+))}
+```
+
+## 6. Configure backend environment
 
 Set required backend environment values including:
 
@@ -65,7 +90,7 @@ Important:
 - Supabase Edge blocks user-defined secrets that start with `SUPABASE_`.
 - Use `CMS_*` names for custom overrides and leave built-in `SUPABASE_*` values as provided by Supabase.
 
-## 6. Add Supabase Edge function entrypoint
+## 7. Add Supabase Edge function entrypoint
 
 Use the starter template:
 
@@ -73,7 +98,7 @@ Use the starter template:
 
 This file delegates directly to `supabaseHandler` from `@webmaster-droid/server`.
 
-## 7. Deploy edge functions
+## 8. Deploy edge functions
 
 ```bash
 npx @webmaster-droid/cli deploy supabase --project-ref your-project-ref --functions webmaster-api
@@ -81,7 +106,7 @@ npx @webmaster-droid/cli deploy supabase --project-ref your-project-ref --functi
 
 Use `--no-verify-jwt` only if your gateway/auth layer already enforces bearer tokens upstream.
 
-## 8. Verify
+## 9. Verify
 
 ```bash
 npm run build

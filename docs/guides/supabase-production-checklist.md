@@ -43,6 +43,16 @@ The service creates missing stage files during startup, but production should ve
 - `<prefix>/events/` (created as needed)
 
 If starter content is required for your site, seed these stage files before first editor use.
+Recommended workflow for path-safe seeding:
+
+```bash
+npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
+```
+
+Then upload `cms/seed.from-editables.json` into both:
+
+- `<prefix>/live/current.json`
+- `<prefix>/draft/current.json`
 
 ## 4. Run auth smoke tests
 

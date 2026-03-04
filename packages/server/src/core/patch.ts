@@ -212,7 +212,7 @@ export function validatePatch(
     const currentValue = readByPath(source, operation.path);
     if (currentValue === undefined) {
       errors.push(
-        `Path does not exist and cannot be created by patch_content: ${operation.path}`
+        `Path does not exist and cannot be created by patch_content: ${operation.path}. Seed draft/live documents from Editable paths before first edit (for example: npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json).`
       );
       continue;
     }

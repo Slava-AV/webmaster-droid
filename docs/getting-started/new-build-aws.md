@@ -31,6 +31,8 @@ Notes:
 - Overlay core layout styles are injected automatically by default.
 - Tailwind hosts do not need `@source` entries or package class scanning hacks.
 - For strict CSP (no inline styles), import `@webmaster-droid/web/core.css` and use `injectCoreStyles={false}`.
+- By default, overlay uses avatar text fallback only (no image required). Set `config.assistantAvatarUrl` for a custom avatar image.
+- Overlay mono font uses `--font-ibm-plex-mono` when present and falls back to system monospace otherwise.
 
 ## 4. Use editable components
 
@@ -51,13 +53,28 @@ Set required backend environment values including:
 - `CMS_PUBLIC_BASE_URL` (required for generated image URLs)
 - auth/model provider variables
 
-## 6. Deploy Lambda bundle
+## 6. Generate initial seed from editable paths
+
+Before first editor use, generate a seed document from your `Editable*` components:
+
+```bash
+npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
+```
+
+Upload this seed to both stage files:
+
+- `cms/live/current.json`
+- `cms/draft/current.json`
+
+If these files remain empty defaults, edits will fail with `path does not exist`.
+
+## 7. Deploy Lambda bundle
 
 ```bash
 npx @webmaster-droid/cli deploy aws --entry src/api/handler.ts --region us-east-1 --functions functionOne,functionTwo
 ```
 
-## 7. Verify
+## 8. Verify
 
 ```bash
 npm run build

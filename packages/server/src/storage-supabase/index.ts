@@ -24,8 +24,9 @@ interface SupabaseCmsStorageOptions {
 
 interface StorageErrorLike {
   message?: string;
-  statusCode?: string;
+  statusCode?: string | number;
   error?: string;
+  cause?: unknown;
 }
 
 interface CheckpointEnvelope {
@@ -195,11 +196,28 @@ function normalizeStoragePath(value: string): string {
 }
 
 function toStorageError(error: unknown): StorageErrorLike {
-  if (!error || typeof error !== "object") {
-    return {};
+  let current: unknown = error;
+
+  while (current && typeof current === "object") {
+    const parsed = current as StorageErrorLike;
+    if (
+      parsed.statusCode !== undefined ||
+      typeof parsed.message === "string" ||
+      typeof parsed.error === "string"
+    ) {
+      return parsed;
+    }
+
+    current = parsed.cause;
   }
 
-  return error as StorageErrorLike;
+  return {};
+}
+
+function createStorageOperationError(message: string, cause: unknown): Error {
+  const error = new Error(message);
+  (error as Error & { cause?: unknown }).cause = cause;
+  return error;
 }
 
 export class SupabaseCmsStorage implements StorageAdapter {
@@ -237,6 +255,8 @@ export class SupabaseCmsStorage implements StorageAdapter {
     if (!draft) {
       await this.saveStage("draft", seed);
     }
+
+    await this.ensureEventLogForCurrentMonth();
   }
 
   async getContent(stage: CmsStage): Promise<CmsDocument> {
@@ -437,17 +457,7 @@ export class SupabaseCmsStorage implements StorageAdapter {
     const existing = await this.tryGetText(key);
     const line = `${JSON.stringify(event)}\n`;
     const body = `${existing ?? ""}${line}`;
-
-    const { error } = await this.client.storage
-      .from(this.bucket)
-      .upload(key, body, {
-        upsert: true,
-        contentType: "application/x-ndjson",
-      });
-
-    if (error) {
-      throw new Error(`Failed to append event log (${key}): ${error.message}`);
-    }
+    await this.putText(key, body, "application/x-ndjson");
   }
 
   private async tryGetStage(stage: CmsStage): Promise<CmsDocument | null> {
@@ -471,15 +481,30 @@ export class SupabaseCmsStorage implements StorageAdapter {
   }
 
   private async putJson(key: string, value: unknown): Promise<void> {
+    await this.putText(
+      key,
+      JSON.stringify(value, null, 2),
+      "application/json"
+    );
+  }
+
+  private async putText(
+    key: string,
+    value: string,
+    contentType: string
+  ): Promise<void> {
     const { error } = await this.client.storage
       .from(this.bucket)
-      .upload(key, JSON.stringify(value, null, 2), {
+      .upload(key, value, {
         upsert: true,
-        contentType: "application/json",
+        contentType,
       });
 
     if (error) {
-      throw new Error(`Failed to write JSON (${key}): ${error.message}`);
+      throw createStorageOperationError(
+        `Failed to write object (${key}): ${error.message}`,
+        error
+      );
     }
   }
 
@@ -502,7 +527,10 @@ export class SupabaseCmsStorage implements StorageAdapter {
         });
 
       if (error) {
-        throw new Error(`Failed to list keys (${normalizedPrefix}): ${error.message}`);
+        throw createStorageOperationError(
+          `Failed to list keys (${normalizedPrefix}): ${error.message}`,
+          error
+        );
       }
 
       const rows = data ?? [];
@@ -539,7 +567,10 @@ export class SupabaseCmsStorage implements StorageAdapter {
   private async getText(key: string): Promise<string> {
     const { data, error } = await this.client.storage.from(this.bucket).download(key);
     if (error) {
-      throw new Error(`Failed to read object (${key}): ${error.message}`);
+      throw createStorageOperationError(
+        `Failed to read object (${key}): ${error.message}`,
+        error
+      );
     }
 
     return data.text();
@@ -547,7 +578,7 @@ export class SupabaseCmsStorage implements StorageAdapter {
 
   private isMissingObjectError(error: unknown): boolean {
     const parsed = toStorageError(error);
-    if (parsed.statusCode === "404") {
+    if (parsed.statusCode === "404" || parsed.statusCode === 404) {
       return true;
     }
 
@@ -558,5 +589,15 @@ export class SupabaseCmsStorage implements StorageAdapter {
 
     const status = parsed.error?.toLowerCase() ?? "";
     return status.includes("not found");
+  }
+
+  private async ensureEventLogForCurrentMonth(): Promise<void> {
+    const key = `${this.prefix}/events/${monthKey()}.jsonl`;
+    const existing = await this.tryGetText(key);
+    if (existing !== null) {
+      return;
+    }
+
+    await this.putText(key, "", "application/x-ndjson");
   }
 }

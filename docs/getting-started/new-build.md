@@ -36,6 +36,8 @@ Notes:
 - Overlay core layout styles are injected automatically by default.
 - Tailwind hosts do not need `@source` entries or package class scanning hacks.
 - For strict CSP (no inline styles), import `@webmaster-droid/web/core.css` and disable injection:
+- By default, overlay uses avatar text fallback only (no image required). Set `config.assistantAvatarUrl` if you want a custom image.
+- Overlay mono font uses `--font-ibm-plex-mono` when provided, and falls back to system monospace if not set.
 
 ```tsx
 import { WebmasterDroidRuntime } from "@webmaster-droid/web";
@@ -44,6 +46,25 @@ import "@webmaster-droid/web/theme.css"; // optional
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return <WebmasterDroidRuntime injectCoreStyles={false}>{children}</WebmasterDroidRuntime>;
+}
+```
+
+Optional avatar/font customization:
+
+```tsx
+import { WebmasterDroidRuntime } from "@webmaster-droid/web";
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <WebmasterDroidRuntime
+      config={{
+        assistantAvatarUrl: "/assets/admin/webmaster-avatar.png",
+        assistantAvatarFallback: "W",
+      }}
+    >
+      {children}
+    </WebmasterDroidRuntime>
+  );
 }
 ```
 
@@ -59,7 +80,30 @@ export function HeroTitle() {
 
 If runtime data may be partial, use `normalizeCmsDocumentWithFallback` from `@webmaster-droid/web` with a schema-shaped fallback document.
 
-## 5. Configure backend environment
+## 5. Generate initial seed from editable paths
+
+Before first editor use, generate a seed document from your `Editable*` components:
+
+```bash
+npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
+```
+
+Publish this generated seed to both storage stages:
+
+- `cms/live/current.json`
+- `cms/draft/current.json`
+
+If these files stay empty defaults, first edits will fail with `path does not exist`.
+
+For array-rendered UI (`items.map(...)`), add explicit indexed paths first, then rerun `seed`:
+
+```tsx
+{cards.map((card, i) => (
+  <EditableText path={`pages.home.cards.${i}.title`} fallback={card.title} />
+))}
+```
+
+## 6. Configure backend environment
 
 Set required backend environment values including:
 
@@ -89,7 +133,7 @@ For AWS variables, use:
 - `CMS_S3_BUCKET`
 - `CMS_S3_REGION`
 
-## 6. Verify
+## 7. Verify
 
 ```bash
 npm run build
