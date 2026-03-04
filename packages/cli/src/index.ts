@@ -282,6 +282,8 @@ type EditablePathSpec = {
   fallbackProp: string;
 };
 
+const SEEDABLE_ROOT_PREFIXES = ["pages.", "layout.", "seo.", "themeTokens."] as const;
+
 const EDITABLE_COMPONENT_PATHS: Record<string, EditablePathSpec[]> = {
   EditableText: [{ pathProp: "path", fallbackProp: "fallback" }],
   EditableRichText: [{ pathProp: "path", fallbackProp: "fallback" }],
@@ -296,12 +298,34 @@ const EDITABLE_COMPONENT_PATHS: Record<string, EditablePathSpec[]> = {
 };
 
 function isSeedableEditablePath(pathValue: string): boolean {
-  return (
-    pathValue.startsWith("pages.") ||
-    pathValue.startsWith("layout.") ||
-    pathValue.startsWith("seo.") ||
-    pathValue.startsWith("themeTokens.")
-  );
+  return SEEDABLE_ROOT_PREFIXES.some((prefix) => pathValue.startsWith(prefix));
+}
+
+function formatSourceLocation(
+  file: string,
+  line?: number
+): string {
+  return line ? `${file}:${line}` : file;
+}
+
+function printSkipDetails(
+  heading: string,
+  entries: string[]
+) {
+  if (entries.length === 0) {
+    return;
+  }
+
+  console.log(heading);
+  const MAX_PREVIEW = 25;
+  const shown = entries.slice(0, MAX_PREVIEW);
+  for (const entry of shown) {
+    console.log(`  - ${entry}`);
+  }
+
+  if (entries.length > shown.length) {
+    console.log(`  - ... ${entries.length - shown.length} more`);
+  }
 }
 
 program
@@ -354,6 +378,8 @@ program
           "MODEL_OPENAI_ENABLED=true",
           "MODEL_GEMINI_ENABLED=true",
           "DEFAULT_MODEL_ID=openai:gpt-5.2",
+          "OPENAI_API_KEY=",
+          "GOOGLE_GENERATIVE_AI_API_KEY=",
           "",
           "# AWS (optional backend)",
           "CMS_S3_BUCKET=",
@@ -461,8 +487,19 @@ program
       });
 
       const staticPaths = new Map<string, { fallback: string; source: string; line?: number }>();
-      const dynamicPaths: Array<{ file: string; line?: number; prop: string }> = [];
-      const invalidPaths: Array<{ file: string; line?: number; path: string }> = [];
+      const dynamicPaths: Array<{
+        file: string;
+        line?: number;
+        component: string;
+        prop: string;
+      }> = [];
+      const invalidPaths: Array<{
+        file: string;
+        line?: number;
+        component: string;
+        prop: string;
+        path: string;
+      }> = [];
 
       for (const file of files) {
         const code = await fs.readFile(file, "utf8");
@@ -495,6 +532,7 @@ program
                 dynamicPaths.push({
                   file: relFile,
                   line: pathAttr?.loc?.start.line,
+                  component: componentName,
                   prop: spec.pathProp,
                 });
                 continue;
@@ -509,6 +547,8 @@ program
                 invalidPaths.push({
                   file: relFile,
                   line: pathAttr?.loc?.start.line,
+                  component: componentName,
+                  prop: spec.pathProp,
                   path: normalizedPath,
                 });
                 continue;
@@ -582,6 +622,19 @@ program
         dynamicPathSkips: dynamicPaths.length,
         invalidPathSkips: invalidPaths.length,
         writeFailures,
+        allowedRootPrefixes: [...SEEDABLE_ROOT_PREFIXES],
+        dynamicPathDetails: dynamicPaths.map((entry) => ({
+          ...entry,
+          location: formatSourceLocation(entry.file, entry.line),
+          reason:
+            "Path prop uses a dynamic expression and cannot be seeded automatically. Convert to concrete indexed paths.",
+        })),
+        invalidPathDetails: invalidPaths.map((entry) => ({
+          ...entry,
+          location: formatSourceLocation(entry.file, entry.line),
+          reason: `Path root is outside supported prefixes (${SEEDABLE_ROOT_PREFIXES.join(", ")}).`,
+        })),
+        manualMigrationRequired: dynamicPaths.length > 0 || invalidPaths.length > 0,
       };
 
       if (opts.json) {
@@ -607,12 +660,29 @@ program
       );
       if (dynamicPaths.length > 0) {
         console.log(
-          `Skipped ${dynamicPaths.length} dynamic path expression(s). Convert them manually or use concrete index paths.`
+          `Skipped ${dynamicPaths.length} dynamic path expression(s). Manual migration required before first edit.`
+        );
+        printSkipDetails(
+          "Dynamic path locations:",
+          dynamicPaths.map((entry) =>
+            `${formatSourceLocation(entry.file, entry.line)} <${entry.component} ${entry.prop}=...>`
+          )
         );
       }
       if (invalidPaths.length > 0) {
         console.log(
-          `Skipped ${invalidPaths.length} non-editable path(s) outside pages/layout/seo/themeTokens.`
+          `Skipped ${invalidPaths.length} non-editable path(s) outside allowed roots (${SEEDABLE_ROOT_PREFIXES.join(", ")}).`
+        );
+        printSkipDetails(
+          "Invalid root path locations:",
+          invalidPaths.map((entry) =>
+            `${formatSourceLocation(entry.file, entry.line)} <${entry.component} ${entry.prop}="${entry.path}">`
+          )
+        );
+      }
+      if (dynamicPaths.length > 0 || invalidPaths.length > 0) {
+        console.log(
+          "Seed report includes all skipped entries. Resolve these paths manually, then rerun `webmaster-droid seed`."
         );
       }
       if (writeFailures > 0) {

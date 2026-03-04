@@ -33,6 +33,8 @@ test("init creates env template and does not create webmaster-droid.config.ts", 
     assert.match(envTemplate, /NEXT_PUBLIC_AGENT_API_BASE_URL=/);
     assert.match(envTemplate, /CMS_SUPABASE_JWKS_URL=/);
     assert.match(envTemplate, /CMS_SUPABASE_AUTH_KEY=/);
+    assert.match(envTemplate, /OPENAI_API_KEY=/);
+    assert.match(envTemplate, /GOOGLE_GENERATIVE_AI_API_KEY=/);
     assert.doesNotMatch(envTemplate, /(^|\n)SUPABASE_JWKS_URL=/);
     assert.match(output, /Backend preset: aws/);
   } finally {

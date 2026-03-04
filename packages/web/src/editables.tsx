@@ -14,6 +14,7 @@ const EDITABLE_ROOTS = ["pages.", "layout.", "seo.", "themeTokens."] as const;
 const MAX_PATH_LENGTH = 320;
 const MAX_LABEL_LENGTH = 120;
 const MAX_PREVIEW_LENGTH = 140;
+const warnedInvalidPaths = new Set<string>();
 type AnyCmsDocument = CmsDocument<object, object, string>;
 const RICH_TEXT_ALLOWED_TAGS = [
   "a",
@@ -127,6 +128,37 @@ function normalizeEditablePath(value: unknown): string | null {
   return trimmed;
 }
 
+function warnInvalidEditablePath(
+  componentName: string,
+  propName: string,
+  value: unknown
+) {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  const rawValue =
+    typeof value === "string"
+      ? value
+      : (() => {
+          try {
+            return JSON.stringify(value);
+          } catch {
+            return String(value);
+          }
+        })();
+
+  const key = `${componentName}:${propName}:${rawValue}`;
+  if (warnedInvalidPaths.has(key)) {
+    return;
+  }
+  warnedInvalidPaths.add(key);
+
+  console.warn(
+    `[webmaster-droid] ${componentName} received ${propName}="${rawValue}", but editable paths must start with one of: ${EDITABLE_ROOTS.join(", ")}. This field will stay fallback-only and will be skipped by \`webmaster-droid seed\`.`
+  );
+}
+
 function normalizeShortText(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") {
     return null;
@@ -152,7 +184,7 @@ function normalizeKind(value: unknown): SelectedElementKind | null {
   return null;
 }
 
-function normalizeRelatedPaths(value: unknown): string[] {
+function normalizeRelatedPaths(value: unknown, componentName?: string): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -162,6 +194,11 @@ function normalizeRelatedPaths(value: unknown): string[] {
     const normalized = normalizeEditablePath(item);
     if (normalized) {
       out.add(normalized);
+      continue;
+    }
+
+    if (componentName) {
+      warnInvalidEditablePath(componentName, "relatedPaths", item);
     }
   }
 
@@ -189,12 +226,17 @@ export type EditableMetaInput = {
   kind: SelectedElementKind;
   relatedPaths?: string[];
   preview?: string;
+  componentName?: string;
 };
 
 export function editableMeta(input: EditableMetaInput): Record<string, string> {
   const path = normalizeEditablePath(input.path);
   const label = normalizeShortText(input.label, MAX_LABEL_LENGTH);
   const kind = normalizeKind(input.kind);
+
+  if (!path && input.componentName) {
+    warnInvalidEditablePath(input.componentName, "path", input.path);
+  }
 
   if (!path || !label || !kind) {
     return {};
@@ -206,7 +248,7 @@ export function editableMeta(input: EditableMetaInput): Record<string, string> {
     "data-wmd-kind": kind,
   };
 
-  const relatedPaths = normalizeRelatedPaths(input.relatedPaths ?? []);
+  const relatedPaths = normalizeRelatedPaths(input.relatedPaths ?? [], input.componentName);
   if (relatedPaths.length > 0) {
     attrs["data-wmd-related-paths"] = JSON.stringify(relatedPaths);
   }
@@ -335,10 +377,18 @@ export function EditableText({
   ...rest
 }: EditableTextProps) {
   const { document, enabled } = useEditableDocument();
-  const value = pickStringValue(document, path, fallback, "EditableText", "fallback", "empty");
+  const value = pickStringValue(
+    document,
+    path,
+    fallback,
+    "EditableText",
+    "fallback",
+    "empty"
+  );
 
   const attrs = enabled
     ? editableMeta({
+        componentName: "EditableText",
         path,
         label: label ?? path,
         kind: "text",
@@ -377,6 +427,7 @@ export function EditableRichText({
 
   const attrs = enabled
     ? editableMeta({
+        componentName: "EditableRichText",
         path,
         label: label ?? path,
         kind: "section",
@@ -429,6 +480,7 @@ export function EditableImage({
 
   const attrs = enabled
     ? editableMeta({
+        componentName: "EditableImage",
         path,
         label: label ?? path,
         kind: "image",
@@ -476,6 +528,7 @@ export function EditableLink({
 
   const attrs = enabled
     ? editableMeta({
+        componentName: "EditableLink",
         path: labelPath,
         label: label ?? labelPath,
         kind: "link",
