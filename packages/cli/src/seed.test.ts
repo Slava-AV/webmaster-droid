@@ -97,6 +97,13 @@ export default function Page() {
     const data = envelope.data as Record<string, unknown>;
     assert.equal(data.discoveredStaticPaths, 5);
     assert.equal(data.dynamicPathSkips, 1);
+    assert.equal(Array.isArray(data.dynamicPathDetails), true);
+    const dynamicDetails = data.dynamicPathDetails as Array<Record<string, unknown>>;
+    assert.equal(dynamicDetails.length, 1);
+    assert.equal(dynamicDetails[0]?.component, "EditableText");
+    assert.equal(dynamicDetails[0]?.prop, "path");
+    assert.match(String(dynamicDetails[0]?.location ?? ""), /page\.tsx:\d+/);
+    assert.equal(data.manualMigrationRequired, true);
 
     const seed = JSON.parse(readFileSync(outFile, "utf8")) as Record<string, unknown>;
     assert.equal(seed.meta !== undefined, true);
@@ -113,6 +120,53 @@ export default function Page() {
     assert.equal(hero.imageAlt, "Hero alt");
     assert.equal(hero.ctaHref, "/about");
     assert.equal(hero.ctaLabel, "About us");
+  } finally {
+    rmSync(outDir, { recursive: true, force: true });
+  }
+});
+
+test("seed reports invalid root path details for manual migration", () => {
+  const outDir = mkdtempSync(path.join(tmpdir(), "wmd-cli-seed-invalid-"));
+  const srcDir = path.join(outDir, "src");
+  const sourceFile = path.join(srcDir, "footer.tsx");
+  const outFile = path.join(outDir, "cms-seed.json");
+
+  try {
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(
+      sourceFile,
+      `import { EditableText } from "@webmaster-droid/web";
+
+export default function Footer() {
+  return <EditableText path="components.footer.copyright" fallback="(c) 2026" />;
+}
+`,
+      "utf8"
+    );
+
+    const envelope = runSeedJson({
+      srcDir,
+      outFile,
+    });
+
+    assert.equal(envelope.ok, true);
+    const data = envelope.data as Record<string, unknown>;
+    assert.equal(data.discoveredStaticPaths, 0);
+    assert.equal(data.invalidPathSkips, 1);
+    assert.equal(Array.isArray(data.allowedRootPrefixes), true);
+
+    const invalidDetails = data.invalidPathDetails as Array<Record<string, unknown>>;
+    assert.equal(invalidDetails.length, 1);
+    assert.equal(invalidDetails[0]?.path, "components.footer.copyright");
+    assert.equal(invalidDetails[0]?.component, "EditableText");
+    assert.equal(invalidDetails[0]?.prop, "path");
+    assert.match(String(invalidDetails[0]?.reason ?? ""), /outside supported prefixes/i);
+    assert.match(String(invalidDetails[0]?.location ?? ""), /footer\.tsx:\d+/);
+    assert.equal(data.manualMigrationRequired, true);
+
+    const seed = JSON.parse(readFileSync(outFile, "utf8")) as Record<string, unknown>;
+    assert.equal(typeof seed.layout, "object");
+    assert.equal(typeof seed.pages, "object");
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }

@@ -44,7 +44,22 @@ Generate first-run seed content from `Editable*` paths:
 npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
 ```
 
-Upload this seed to both `cms/live/current.json` and `cms/draft/current.json` before first editor mutations.
+Seed only includes supported roots (`pages.`, `layout.`, `seo.`, `themeTokens.`). Dynamic expressions (for example, template-literal index paths) are reported and must be migrated manually to concrete paths.
+
+For local-first setup before storage upload:
+
+```bash
+mkdir -p cms/live cms/draft
+cp cms/seed.from-editables.json cms/live/current.json
+cp cms/seed.from-editables.json cms/draft/current.json
+```
+
+Use the same two targets in remote storage (`cms/live/current.json` and `cms/draft/current.json`) before first editor mutations.
+
+Model providers require standard API key env vars:
+
+- `OPENAI_API_KEY` for OpenAI models
+- `GOOGLE_GENERATIVE_AI_API_KEY` for Gemini models
 
 Use AWS instead:
 

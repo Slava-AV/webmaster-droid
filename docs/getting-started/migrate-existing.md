@@ -28,7 +28,24 @@ Generate a seed document that matches converted `Editable*` paths before first e
 npx @webmaster-droid/cli seed apps/site/src --out cms/seed.from-editables.json
 ```
 
-Then upload or copy this seed into both stage files:
+Seed supports these root prefixes only:
+
+- `pages.`
+- `layout.`
+- `seo.`
+- `themeTokens.`
+
+If seed reports dynamic/invalid skips, treat them as required manual migration items. The CLI output includes source file and line locations for each skipped entry.
+
+In local-first development, copy seed into both stage files:
+
+```bash
+mkdir -p cms/live cms/draft
+cp cms/seed.from-editables.json cms/live/current.json
+cp cms/seed.from-editables.json cms/draft/current.json
+```
+
+Then upload this same seed to remote stage files:
 
 - `cms/live/current.json`
 - `cms/draft/current.json`

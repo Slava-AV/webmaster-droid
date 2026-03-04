@@ -49,6 +49,17 @@ Recommended workflow for path-safe seeding:
 npx @webmaster-droid/cli seed src --out cms/seed.from-editables.json
 ```
 
+Seed supports only these root prefixes: `pages.`, `layout.`, `seo.`, `themeTokens.`.
+If seed reports dynamic/invalid skips, resolve each reported source location manually before production rollout.
+
+For local-first setup before upload:
+
+```bash
+mkdir -p cms/live cms/draft
+cp cms/seed.from-editables.json cms/live/current.json
+cp cms/seed.from-editables.json cms/draft/current.json
+```
+
 Then upload `cms/seed.from-editables.json` into both:
 
 - `<prefix>/live/current.json`
