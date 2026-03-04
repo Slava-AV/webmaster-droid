@@ -1,5 +1,11 @@
 # @webmaster-droid/cli
 
+## 0.4.2
+
+### Patch Changes
+
+- 6b01bbc: Improve seed diagnostics by surfacing dynamic and invalid editable paths with source locations, and add dev-time warnings when editable components use unsupported path roots. Also clarifies local-first seed staging and model provider env var docs.
+
 ## 0.4.1
 
 ### Patch Changes
